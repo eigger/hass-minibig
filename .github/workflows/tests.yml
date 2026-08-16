@@ -27,7 +27,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install ruff pytest pytest-asyncio bleak bleak-retry-connector
+          pip install ruff pytest pytest-asyncio bleak bleak-retry-connector voluptuous
 
       - name: Run linter (ruff)
         run: |
