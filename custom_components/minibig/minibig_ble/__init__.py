@@ -1,17 +1,5 @@
 """MiniBig BLE protocol package."""
 
-from .const import (
-    DEVICE_NOTIFY_UUID,
-    DEVICE_SERVICE_UUID,
-    DEVICE_WRITE_UUID,
-    HUBMINI_NOTIFY_UUID,
-    HUBMINI_SERVICE_UUID,
-    HUBMINI_WRITE_UUID,
-    PASS_KEY,
-    Opcode,
-    StatusCode,
-    STATUS_MESSAGES,
-)
 from .client import (
     MiniBigConnection,
     MiniBigConnectionError,
@@ -20,11 +8,24 @@ from .client import (
     MiniBigSupersededError,
     MiniBigTimeoutError,
 )
+from .const import (
+    DEVICE_NOTIFY_UUID,
+    DEVICE_SERVICE_UUID,
+    DEVICE_WRITE_UUID,
+    HUBMINI_NOTIFY_UUID,
+    HUBMINI_SERVICE_UUID,
+    HUBMINI_WRITE_UUID,
+    PASS_KEY,
+    STATUS_MESSAGES,
+    Opcode,
+    StatusCode,
+)
 from .devices import (
     ALL_SLOTS,
     SLOT_BATTERY,
     SLOT_CURTAIN_TYPE,
     SLOT_DIRECTION,
+    SLOT_DP_CODES,
     SLOT_INSTALL_POSITION,
     SLOT_INSTALL_TYPE,
     SLOT_LENGTH,
@@ -36,7 +37,6 @@ from .devices import (
     SLOT_POWER,
     SLOT_STOP,
     SLOT_UNPAIR_EMITTER,
-    SLOT_DP_CODES,
     DeviceProfile,
     get_device_profile,
     resolve_dp,

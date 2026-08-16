@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from unittest.mock import AsyncMock, patch
+
 import pytest
 
 from custom_components.minibig.minibig_ble.client import (

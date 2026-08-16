@@ -36,6 +36,7 @@ def test_import_all_platforms():
 def test_cover_and_switch_availability_with_none_dp():
     """Verify that cover and switch entities with None dp_id are initialized as available=False."""
     from unittest.mock import MagicMock
+
     from custom_components.minibig.cover import MiniBigWindowOpenerCover
     from custom_components.minibig.switch import MiniBigPowerSwitch
 
@@ -65,6 +66,7 @@ def test_cover_and_switch_availability_with_none_dp():
 def test_new_setting_platforms_add_nothing_until_measured():
     """Select/number setups create no entities while DP slots are unmeasured."""
     from unittest.mock import MagicMock
+
     from custom_components.minibig import number, select
     from custom_components.minibig.minibig_ble.devices import PROFILE_WINDOW_OPENER
 

@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable
-from dataclasses import dataclass
 import logging
 import time
+from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Any
 
 from bleak import BleakClient
@@ -38,7 +38,7 @@ except ImportError:
         await client.connect()
         return client
 
-from .const import Opcode, STATUS_MESSAGES
+from .const import STATUS_MESSAGES, Opcode
 from .parser import MiniBigDeviceInfo
 from .writer import (
     Response,
