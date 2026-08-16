@@ -1,0 +1,39 @@
+send_raw:
+  name: Send Raw Command
+  description: Sends a raw command opcode and payload to the MiniBig device over BLE GATT. Fires a 'minibig_raw_response' event with the response.
+  target:
+    device:
+      integration: minibig
+  fields:
+    method:
+      name: Opcode Method
+      description: The numeric opcode (e.g. 42 for PUB_DPS, 43 for READ_DPS, 17 for RESTART).
+      required: true
+      example: 43
+      selector:
+        number:
+          min: 1
+          max: 255
+          mode: box
+    payload:
+      name: Payload (Hex)
+      description: Optional hexadecimal payload string (e.g. '000064').
+      required: false
+      example: "000064"
+      selector:
+        text:
+
+publish_dps:
+  name: Publish DPS
+  description: Sets one or more DP values on the MiniBig device.
+  target:
+    device:
+      integration: minibig
+  fields:
+    dps:
+      name: DP List
+      description: List of DP items containing dp_id and value.
+      required: true
+      example: '[{"dp_id": 0, "value": 100}]'
+      selector:
+        object:

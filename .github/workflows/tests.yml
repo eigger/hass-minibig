@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hassfest:
+    name: Hassfest Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Hassfest
+        uses: home-assistant/actions/hassfest@master
+
+  hacs:
+    name: HACS Action
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: HACS Action
+        uses: hacs/action@main
+        with:
+          category: integration
+
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install ruff pytest pytest-asyncio bleak bleak-retry-connector
+          python -c "import json, subprocess, sys; reqs = json.load(open('custom_components/minibig/manifest.json')).get('requirements', []); subprocess.run([sys.executable, '-m', 'pip', 'install', *reqs], check=True) if reqs else None"
+
+      - name: Lint with Ruff
+        run: |
+          ruff check custom_components tests
+
+      - name: Run Pytest
+        run: |
+          pytest tests/ -v

@@ -1,0 +1,31 @@
+{
+  "entity": {
+    "button": {
+      "restart": {
+        "default": "mdi:restart"
+      },
+      "refresh": {
+        "default": "mdi:refresh"
+      },
+      "factory_reset": {
+        "default": "mdi:restore-alert"
+      }
+    },
+    "binary_sensor": {
+      "moving": {
+        "default": "mdi:motion"
+      },
+      "connectivity": {
+        "default": "mdi:bluetooth-connect"
+      },
+      "init_mode": {
+        "default": "mdi:bluetooth-settings"
+      }
+    },
+    "sensor": {
+      "last_status": {
+        "default": "mdi:information-outline"
+      }
+    }
+  }
+}

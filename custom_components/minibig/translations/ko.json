@@ -1,0 +1,149 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "bluetooth_confirm": {
+        "title": "MiniBig 기기 설정",
+        "description": "{name} ({address}) 기기를 추가하시겠습니까?"
+      },
+      "user": {
+        "title": "MiniBig 기기 선택",
+        "description": "설정할 MiniBig BLE 기기를 선택하세요.",
+        "data": {
+          "address": "기기"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "이미 설정된 기기입니다",
+      "not_minibig_device": "발견된 기기가 MiniBig 기기가 아닙니다",
+      "hubmini_not_supported": "HubMini는 외부 연동용 게이트웨이이므로 Home Assistant에 직접 추가되지 않습니다. Home Assistant는 각 MiniBig 기기에 BLE로 직접 연결합니다.",
+      "no_devices_found": "Bluetooth에서 미설정된 MiniBig 기기를 찾을 수 없습니다."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "MiniBig 설정 옵션",
+        "description": "BLE 연결 방식, 폴링 주기 및 커스텀 DP 매핑을 설정합니다.",
+        "data": {
+          "keep_connected": "상시 연결 유지",
+          "poll_interval_min": "폴링 주기 (분, 0 입력 시 비활성화)",
+          "retry_count": "연결 재시도 횟수",
+          "power_dp_id": "사용자 정의 전원 DP ID (선택사항)",
+          "position_dp_id": "사용자 정의 위치 DP ID (선택사항)",
+          "dp_overrides": "DP 슬롯 재정의"
+        },
+        "data_description": {
+          "keep_connected": "BLE 연결을 항상 유지합니다. 주의: 활성화 시 공식 스마트폰 앱이 연결할 수 없으며 기기 배터리 소모가 증가합니다.",
+          "dp_overrides": "고급 설정. 실측으로 알아낸 DP ID 를 기능 이름에 연결합니다 (예: measure: 7). 확인된 값이 없으면 비워두세요."
+        }
+      }
+    }
+  },
+  "entity": {
+    "cover": {
+      "window_opener": {
+        "name": "커버"
+      }
+    },
+    "switch": {
+      "power": {
+        "name": "전원"
+      }
+    },
+    "sensor": {
+      "battery": {
+        "name": "배터리"
+      },
+      "rssi": {
+        "name": "신호 세기 (RSSI)"
+      },
+      "last_status": {
+        "name": "마지막 응답 상태"
+      }
+    },
+    "binary_sensor": {
+      "moving": {
+        "name": "동작 중"
+      },
+      "connectivity": {
+        "name": "연결 상태"
+      },
+      "init_mode": {
+        "name": "페어링 모드"
+      }
+    },
+    "button": {
+      "restart": {
+        "name": "재시작"
+      },
+      "refresh": {
+        "name": "새로고침"
+      },
+      "factory_reset": {
+        "name": "공장 초기화"
+      },
+      "measure": {
+        "name": "행정 실측"
+      },
+      "measure_stop": {
+        "name": "실측 중지"
+      },
+      "pair_emitter": {
+        "name": "리모컨 페어링"
+      },
+      "unpair_emitter": {
+        "name": "리모컨 해제"
+      }
+    },
+    "select": {
+      "install_type": {
+        "name": "설치 타입"
+      },
+      "curtain_type": {
+        "name": "커튼 방식"
+      },
+      "direction": {
+        "name": "개폐 방향"
+      },
+      "mode": {
+        "name": "동작 모드"
+      }
+    },
+    "number": {
+      "length": {
+        "name": "행정 길이"
+      },
+      "install_position": {
+        "name": "설치 위치"
+      }
+    }
+  },
+  "services": {
+    "send_raw": {
+      "name": "원시 명령 전송",
+      "description": "MiniBig 기기에 BLE GATT를 통해 원시 opcode 및 16진수 페이로드를 직접 전송합니다.",
+      "fields": {
+        "method": {
+          "name": "메소드 (Opcode)",
+          "description": "숫자 opcode (예: PUB_DPS=42, READ_DPS=43, RESTART=17)."
+        },
+        "payload": {
+          "name": "페이로드",
+          "description": "16진수 바이트 문자열."
+        }
+      }
+    },
+    "publish_dps": {
+      "name": "DPS 설정",
+      "description": "MiniBig 기기의 DP 값을 설정합니다.",
+      "fields": {
+        "dps": {
+          "name": "DP 목록",
+          "description": "dp_id와 value를 포함하는 객체 배열."
+        }
+      }
+    }
+  }
+}

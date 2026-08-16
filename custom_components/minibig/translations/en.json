@@ -1,0 +1,149 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "bluetooth_confirm": {
+        "title": "Set up MiniBig Device",
+        "description": "Do you want to set up {name} ({address})?"
+      },
+      "user": {
+        "title": "Select MiniBig Device",
+        "description": "Choose a discovered MiniBig BLE device to set up.",
+        "data": {
+          "address": "Device"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Device is already configured",
+      "not_minibig_device": "The discovered device is not a recognized MiniBig device",
+      "hubmini_not_supported": "HubMini is an external gateway and is not directly supported in Home Assistant. Home Assistant communicates with MiniBig devices directly via BLE.",
+      "no_devices_found": "No unconfigured MiniBig devices found on Bluetooth."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "MiniBig Options",
+        "description": "Configure BLE connection, polling interval, and custom DP mapping.",
+        "data": {
+          "keep_connected": "Keep Connected",
+          "poll_interval_min": "Polling Interval (minutes, 0 to disable)",
+          "retry_count": "Connection Retry Attempts",
+          "power_dp_id": "Custom Power DP ID (Optional)",
+          "position_dp_id": "Custom Position DP ID (Optional)",
+          "dp_overrides": "DP Slot Overrides"
+        },
+        "data_description": {
+          "keep_connected": "Maintains a permanent BLE connection. WARNING: The official smartphone app cannot connect while enabled, and device battery drain will increase.",
+          "dp_overrides": "Advanced. Maps named settings to DP IDs discovered on your hardware, e.g. measure: 7. Leave empty unless you have captured them."
+        }
+      }
+    }
+  },
+  "entity": {
+    "cover": {
+      "window_opener": {
+        "name": "Cover"
+      }
+    },
+    "switch": {
+      "power": {
+        "name": "Power"
+      }
+    },
+    "sensor": {
+      "battery": {
+        "name": "Battery"
+      },
+      "rssi": {
+        "name": "Signal Strength (RSSI)"
+      },
+      "last_status": {
+        "name": "Last Response Status"
+      }
+    },
+    "binary_sensor": {
+      "moving": {
+        "name": "Moving"
+      },
+      "connectivity": {
+        "name": "Connectivity"
+      },
+      "init_mode": {
+        "name": "Pairing Mode"
+      }
+    },
+    "button": {
+      "restart": {
+        "name": "Restart"
+      },
+      "refresh": {
+        "name": "Refresh"
+      },
+      "factory_reset": {
+        "name": "Factory Reset"
+      },
+      "measure": {
+        "name": "Measure Travel Limits"
+      },
+      "measure_stop": {
+        "name": "Stop Measuring"
+      },
+      "pair_emitter": {
+        "name": "Pair Remote"
+      },
+      "unpair_emitter": {
+        "name": "Unpair Remote"
+      }
+    },
+    "select": {
+      "install_type": {
+        "name": "Installation Type"
+      },
+      "curtain_type": {
+        "name": "Curtain Type"
+      },
+      "direction": {
+        "name": "Opening Direction"
+      },
+      "mode": {
+        "name": "Operating Mode"
+      }
+    },
+    "number": {
+      "length": {
+        "name": "Travel Length"
+      },
+      "install_position": {
+        "name": "Installation Position"
+      }
+    }
+  },
+  "services": {
+    "send_raw": {
+      "name": "Send Raw Command",
+      "description": "Sends a raw opcode and optional hex payload directly to the MiniBig device over BLE GATT.",
+      "fields": {
+        "method": {
+          "name": "Method (Opcode)",
+          "description": "Numeric opcode (e.g. 42 for PUB_DPS, 43 for READ_DPS, 17 for RESTART)."
+        },
+        "payload": {
+          "name": "Payload",
+          "description": "Hexadecimal payload bytes."
+        }
+      }
+    },
+    "publish_dps": {
+      "name": "Publish DPS",
+      "description": "Sets one or more DP values on the MiniBig device.",
+      "fields": {
+        "dps": {
+          "name": "DP List",
+          "description": "List of DP objects containing dp_id and value."
+        }
+      }
+    }
+  }
+}
