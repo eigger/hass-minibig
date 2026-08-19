@@ -50,7 +50,6 @@ class MiniBigWindowOpenerCover(
     """Cover entity representing a MiniBig BLE Window Opener."""
 
     _attr_has_entity_name = True
-    _attr_device_class = CoverDeviceClass.WINDOW
     _attr_supported_features = (
         CoverEntityFeature.OPEN
         | CoverEntityFeature.CLOSE
@@ -72,6 +71,16 @@ class MiniBigWindowOpenerCover(
         self._stop_dp = stop_dp
         self._attr_unique_id = f"{entry.unique_id}_cover"
         self._attr_translation_key = "window_opener"
+
+        name_lower = entry.runtime_data.device_info.name.lower()
+        if "curtain" in name_lower or name_lower.startswith("clwm"):
+            self._attr_device_class = CoverDeviceClass.CURTAIN
+        elif "blind" in name_lower:
+            self._attr_device_class = CoverDeviceClass.BLIND
+        elif "garage" in name_lower:
+            self._attr_device_class = CoverDeviceClass.GARAGE
+        else:
+            self._attr_device_class = CoverDeviceClass.WINDOW
 
         address = entry.runtime_data.device_info.address
         self._attr_device_info = DeviceInfo(
