@@ -75,7 +75,11 @@ class MockCoordinatorEntity(MockBase):
         return True
 
 class MockDataUpdateCoordinator(MockBase):
-    pass
+    """Stub that records update_interval like the real coordinator does."""
+
+    def __init__(self, *args, update_interval=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.update_interval = update_interval
 
 sys.modules["homeassistant.components.button"] = MagicMock()
 sys.modules["homeassistant.components.button"].ButtonEntity = MockButtonEntity
