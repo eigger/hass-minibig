@@ -50,7 +50,7 @@ graph TD
 - **`MiniBigActiveCoordinator`**: Coordinates active GATT polling and streaming report aggregation. Skips periodic polling while the device is actively moving.
 
 ### 2.4 Entity Platforms
-- **`cover.py`**: Window Opener entity with target positioning (0~100%), immediate stop, end-stop snap ($\le 2\% \to 0\%$, $\ge 98\% \to 100\%$), direction tracking (`is_opening`/`is_closing`), and `RestoreEntity`.
+- **`cover.py`**: Window Opener entity with target positioning (0~100%, reported unmodified — verified to match the vendor app's own reading exactly, including non-round endpoints), immediate stop, direction tracking (`is_opening`/`is_closing`), and `RestoreEntity`.
 - **`switch.py`**: Power switch for Push/Switch devices with optimistic feedback and readback synchronization.
 - **`sensor.py`**: Battery level sensor (`dp10`), diagnostic RSSI sensor, and diagnostic last status sensor.
 - **`binary_sensor.py`**: Moving state (active when receiving `REPORT_DPS`), connectivity state (diagnostic), and pairing mode (diagnostic).
