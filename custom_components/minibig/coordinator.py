@@ -150,10 +150,6 @@ class MiniBigActiveCoordinator(DataUpdateCoordinator[dict[int, int]]):
 
     async def _async_update_data(self) -> dict[int, int]:
         """Perform active poll over BLE GATT."""
-        poll_min = self.entry.options.get(CONF_POLL_INTERVAL_MIN, DEFAULT_POLL_INTERVAL_MIN)
-        if poll_min <= 0:
-            return self.data or {}
-
         # Skip polling while device is moving
         if self.connection.is_moving:
             _LOGGER.debug("Skipping poll for %s: device is currently moving", self.entry.unique_id)
