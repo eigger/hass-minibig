@@ -8,14 +8,19 @@ import voluptuous as vol
 from homeassistant.components import bluetooth
 from homeassistant.components.bluetooth import BluetoothScanningMode
 from homeassistant.const import CONF_ADDRESS
-from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
 
 from .const import (
+    CONF_D_TYPE,
+    CONF_FV,
+    CONF_IDV,
+    CONF_IS_LEGACY,
     CONF_KEEP_CONNECTED,
     CONF_RETRY_COUNT,
+    CONF_REV,
     DEFAULT_COMMAND_TIMEOUT_S,
     DEFAULT_IDLE_DISCONNECT_S,
     DEFAULT_KEEP_CONNECTED,
@@ -30,6 +35,9 @@ from .coordinator import (
     MiniBigPassiveBluetoothProcessorCoordinator,
 )
 from .minibig_ble import (
+    DEVICE_NOTIFY_UUID,
+    DEVICE_SERVICE_UUID,
+    DEVICE_WRITE_UUID,
     MiniBigConnection,
     MiniBigDeviceInfo,
     get_device_profile,
@@ -77,19 +85,25 @@ async def async_setup_entry(hass: HomeAssistant, entry: MiniBigConfigEntry) -> b
     dev_info = parse_advertisement(service_info) if service_info else None
 
     if dev_info is None:
-        # Fallback default info if device is temporarily offline
+        # No live advertisement yet at this exact moment (e.g. right after HA
+        # startup). Prefer the last known-good identity persisted from a
+        # previous session over a blind idv="0000" placeholder, so the very
+        # first command after a restart already carries a real IDV header
+        # instead of being guaranteed to fail with 255 DEVICE_NOT_MATCHING
+        # until a fresh advertisement happens to be parsed.
+        stored_idv = entry.data.get(CONF_IDV)
         dev_info = MiniBigDeviceInfo(
             address=address,
             name=entry.title,
-            idv="0000",
-            fv=0,
-            rev=0,
-            d_type=0,
+            idv=stored_idv or "0000",
+            fv=entry.data.get(CONF_FV, 0),
+            rev=entry.data.get(CONF_REV, 0),
+            d_type=entry.data.get(CONF_D_TYPE, 0),
             init_mode=False,
-            is_legacy=False,
-            service_uuid="2b8d0001-6828-46af-98aa-557761b15400",
-            write_uuid="2b8d0002-6828-46af-98aa-557761b15400",
-            notify_uuid="2b8d0003-6828-46af-98aa-557761b15400",
+            is_legacy=entry.data.get(CONF_IS_LEGACY, False),
+            service_uuid=DEVICE_SERVICE_UUID,
+            write_uuid=DEVICE_WRITE_UUID,
+            notify_uuid=DEVICE_NOTIFY_UUID,
         )
 
     profile = get_device_profile(dev_info)
@@ -131,6 +145,56 @@ async def async_setup_entry(hass: HomeAssistant, entry: MiniBigConfigEntry) -> b
         entry=entry,
         connectable=True,
     )
+    # Without this, the coordinator never subscribes to advertisement events at
+    # all: RSSI/connectivity/pairing-mode entities stay stuck at their initial
+    # (usually unknown) value forever, and the device_info self-heal listener
+    # registered below never fires either.
+    entry.async_on_unload(passive_coordinator.async_start())
+
+    @callback
+    def _refresh_connection_device_info() -> None:
+        """Keep the BLE client's IDV/fv/rev in sync with live advertisements,
+        and persist a real identity into the config entry so it survives
+        restarts too.
+
+        Setup above only captures one snapshot (a live advertisement, a
+        previously persisted identity, or a idv="0000" placeholder as a last
+        resort). Without this listener, a bad initial snapshot sends the
+        wrong IDV header on every command for the entry's whole lifetime
+        (device replies 255 DEVICE_NOT_MATCHING) until Home Assistant is
+        restarted. update_device_info() ignores a placeholder idv if a real
+        one is already known, so this only ever improves on the initial
+        snapshot - and once persisted, later restarts start from that real
+        identity immediately instead of the "0000" placeholder again.
+        """
+        if (info := passive_coordinator.last_device_info) is None:
+            return
+        connection.update_device_info(info)
+
+        if info.idv == "0000":
+            return
+        stored = (
+            entry.data.get(CONF_IDV),
+            entry.data.get(CONF_FV),
+            entry.data.get(CONF_REV),
+            entry.data.get(CONF_D_TYPE),
+            entry.data.get(CONF_IS_LEGACY),
+        )
+        fresh = (info.idv, info.fv, info.rev, info.d_type, info.is_legacy)
+        if stored != fresh:
+            hass.config_entries.async_update_entry(
+                entry,
+                data={
+                    **entry.data,
+                    CONF_IDV: info.idv,
+                    CONF_FV: info.fv,
+                    CONF_REV: info.rev,
+                    CONF_D_TYPE: info.d_type,
+                    CONF_IS_LEGACY: info.is_legacy,
+                },
+            )
+
+    entry.async_on_unload(passive_coordinator.async_add_listener(_refresh_connection_device_info))
 
     active_coordinator = MiniBigActiveCoordinator(
         hass,

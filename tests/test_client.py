@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import asyncio
+import dataclasses
 from unittest.mock import AsyncMock, patch
 
 import pytest
 
 from custom_components.minibig.minibig_ble.client import (
     MiniBigConnection,
+    MiniBigConnectionError,
     MiniBigDeviceError,
     MiniBigSupersededError,
     MiniBigTimeoutError,
@@ -312,3 +314,83 @@ async def test_generic_connect_failure_also_recovers():
         mock_sleep.assert_called_with(12.0)
 
     await conn.disconnect()
+
+
+def test_update_device_info_guards_against_placeholder_regression():
+    """A placeholder idv="0000" must never overwrite a previously known real
+    IDV, but must be accepted when nothing better is known yet, and any real
+    IDV must always update (self-healing from a bad boot-time snapshot)."""
+    dev = _make_dev()  # idv="1CFE"
+    conn = MiniBigConnection(device_info=dev)
+
+    placeholder = dataclasses.replace(dev, idv="0000", fv=0, rev=0, d_type=0)
+    conn.update_device_info(placeholder)
+    assert conn.device_info.idv == "1CFE"  # unchanged
+
+    fresh = dataclasses.replace(dev, idv="AFEA", fv=3, rev=1)
+    conn.update_device_info(fresh)
+    assert conn.device_info.idv == "AFEA"
+    assert conn.device_info.fv == 3
+    assert conn.device_info.rev == 1
+
+    # A placeholder is accepted only when we don't already have a real IDV.
+    conn_unknown = MiniBigConnection(device_info=placeholder)
+    conn_unknown.update_device_info(placeholder)
+    assert conn_unknown.device_info.idv == "0000"
+    conn_unknown.update_device_info(fresh)
+    assert conn_unknown.device_info.idv == "AFEA"
+
+
+@pytest.mark.asyncio
+async def test_ble_device_reresolved_and_fails_clearly_when_none():
+    """connect() must re-resolve ble_device fresh on every attempt (not reuse
+    a stale lookup across the recovery retry), and must raise a clear
+    MiniBigConnectionError - not silently fall back to a broken bare-address
+    BleakClient - when no connectable device is currently known."""
+    dev = _make_dev()
+    call_count = {"n": 0}
+    sentinel_device = object()
+
+    def _ble_device_callback():
+        call_count["n"] += 1
+        # First attempt: nothing known yet. Retry (after the recovery wait):
+        # a fresh advertisement has since been seen.
+        return None if call_count["n"] == 1 else sentinel_device
+
+    conn = MiniBigConnection(device_info=dev, ble_device_callback=_ble_device_callback)
+
+    fake_client = AsyncMock()
+    fake_client.is_connected = True
+
+    with patch(
+        "custom_components.minibig.minibig_ble.client.establish_connection",
+        new_callable=AsyncMock,
+        return_value=fake_client,
+    ) as mock_establish, patch(
+        "custom_components.minibig.minibig_ble.client.asyncio.sleep", new_callable=AsyncMock
+    ), patch(
+        "custom_components.minibig.minibig_ble.client.close_stale_connections_by_address",
+        new_callable=AsyncMock,
+    ):
+        await conn.connect()
+
+    assert call_count["n"] == 2
+    mock_establish.assert_called_once()
+    assert conn.is_connected is True
+
+
+@pytest.mark.asyncio
+async def test_ble_device_none_error_message_is_clear():
+    """When ble_device stays unresolved across both attempts, the final error
+    must name the address and explain why, not just relay a low-level
+    "unknown, never seen by any scanner" style message from a broken
+    fallback path (that path no longer exists)."""
+    dev = _make_dev()
+    conn = MiniBigConnection(device_info=dev, ble_device_callback=lambda: None)
+
+    with patch("custom_components.minibig.minibig_ble.client.asyncio.sleep", new_callable=AsyncMock), patch(
+        "custom_components.minibig.minibig_ble.client.close_stale_connections_by_address",
+        new_callable=AsyncMock,
+    ):
+        with pytest.raises(MiniBigConnectionError, match=dev.address):
+            await conn.connect()
