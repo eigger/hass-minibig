@@ -30,23 +30,35 @@
           "keep_connected": "상시 연결 유지",
           "poll_interval_min": "폴링 주기 (분, 0 입력 시 비활성화)",
           "retry_count": "연결 재시도 횟수",
+          "cover_device_class": "커버 유형",
           "power_dp_id": "사용자 정의 전원 DP ID (선택사항)",
           "position_dp_id": "사용자 정의 위치 DP ID (선택사항)",
           "dp_overrides": "DP 슬롯 재정의"
         },
         "data_description": {
           "keep_connected": "BLE 연결을 항상 유지합니다. 주의: 활성화 시 공식 스마트폰 앱이 연결할 수 없으며 기기 배터리 소모가 증가합니다.",
-          "dp_overrides": "고급 설정. 실측으로 알아낸 DP ID 를 기능 이름에 연결합니다 (예: measure: 7). 확인된 값이 없으면 비워두세요."
+          "dp_overrides": "고급 설정. 실측으로 알아낸 DP ID 를 기능 이름에 연결합니다 (예: measure: 7). 확인된 값이 없으면 비워두세요.",
+          "cover_device_class": "기기의 실제 용도에 맞게 선택하세요. Home Assistant UI의 아이콘과 이름에 반영됩니다."
+        },
+        "selector": {
+          "cover_device_class": {
+            "options": {
+              "window": "창문",
+              "curtain": "커튼",
+              "blind": "블라인드",
+              "garage": "차고문",
+              "shade": "쉐이드",
+              "awning": "어닝",
+              "door": "문",
+              "damper": "댐퍼"
+            }
+          }
         }
       }
     }
   },
   "entity": {
-    "cover": {
-      "window_opener": {
-        "name": "커버"
-      }
-    },
+    "cover": {},
     "switch": {
       "power": {
         "name": "전원"

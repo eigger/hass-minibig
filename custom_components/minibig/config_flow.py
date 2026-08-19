@@ -21,12 +21,14 @@ from homeassistant.core import callback
 from homeassistant.helpers import selector
 
 from .const import (
+    CONF_COVER_DEVICE_CLASS,
     CONF_DP_OVERRIDES,
     CONF_KEEP_CONNECTED,
     CONF_POLL_INTERVAL_MIN,
     CONF_POSITION_DP_ID,
     CONF_POWER_DP_ID,
     CONF_RETRY_COUNT,
+    DEFAULT_COVER_DEVICE_CLASS,
     DEFAULT_KEEP_CONNECTED,
     DEFAULT_POLL_INTERVAL_MIN,
     DEFAULT_RETRY_COUNT,
@@ -208,6 +210,15 @@ class MiniBigOptionsFlowHandler(OptionsFlowWithReload):
                         CONF_POSITION_DP_ID,
                         description={"suggested_value": options.get(CONF_POSITION_DP_ID)},
                     ): vol.Any(None, vol.Coerce(int)),
+                    vol.Optional(
+                        CONF_COVER_DEVICE_CLASS,
+                        default=options.get(CONF_COVER_DEVICE_CLASS, DEFAULT_COVER_DEVICE_CLASS),
+                    ): selector.SelectSelector(
+                        selector.SelectSelectorConfig(
+                            options=["window", "curtain", "blind", "garage", "shade", "awning", "door", "damper"],
+                            translation_key="cover_device_class",
+                        )
+                    ),
                     vol.Optional(
                         CONF_DP_OVERRIDES,
                         description={"suggested_value": options.get(CONF_DP_OVERRIDES)},
