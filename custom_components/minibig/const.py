@@ -6,6 +6,16 @@ from homeassistant.const import Platform
 
 DOMAIN = "minibig"
 
+# Last-known device identity, persisted in the config entry's data so the BLE
+# client starts with a real IDV/fv/rev/d_type across Home Assistant restarts
+# instead of a idv="0000" placeholder every time no advertisement has been
+# captured yet at setup. Updated as fresh advertisements are parsed.
+CONF_IDV = "idv"
+CONF_FV = "fv"
+CONF_REV = "rev"
+CONF_D_TYPE = "d_type"
+CONF_IS_LEGACY = "is_legacy"
+
 # Default configuration values
 DEFAULT_RETRY_COUNT = 3
 DEFAULT_COMMAND_TIMEOUT_S = 10.0

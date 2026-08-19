@@ -153,6 +153,26 @@ class MiniBigConnection:
         except RuntimeError:
             return asyncio.get_event_loop()
 
+    def update_device_info(self, new_info: MiniBigDeviceInfo) -> None:
+        """Refresh the device info used to build frames from a fresh advertisement.
+
+        device_info is normally captured once at config entry setup (from the
+        last known advertisement, or a placeholder with idv="0000" if none was
+        available yet). If it is never refreshed, a boot-time placeholder stays
+        wired into every frame for the entry's whole lifetime, silently sending
+        the wrong IDV header on every command (device replies 255
+        DEVICE_NOT_MATCHING) until Home Assistant is restarted or the entry is
+        reloaded. Callers should feed this from an ongoing advertisement stream
+        (see MiniBigPassiveBluetoothProcessorCoordinator) so a bad initial
+        snapshot self-heals as soon as a real advertisement is parsed.
+
+        A placeholder idv ("0000") never overwrites a previously known real
+        one, since that would regress good data to a worse guess.
+        """
+        if new_info.idv == "0000" and self.device_info.idv != "0000":
+            return
+        self.device_info = new_info
+
     @property
     def is_connected(self) -> bool:
         """Return True if BLE client is connected."""
@@ -272,23 +292,38 @@ class MiniBigConnection:
         except Exception:
             pass
 
-        ble_device = self._ble_device_callback() if self._ble_device_callback else None
-
         async def _attempt_connect() -> Any:
             if self._client_override is not None:
                 await self._client_override.connect()
                 return self._client_override
-            if ble_device:
-                client = await establish_connection(
-                    BleakClient,
-                    ble_device,
-                    self.device_info.name or address,
-                    max_attempts=self.retry_count,
+            # Re-resolve on every attempt, not once for the whole connect() call.
+            # HA's own connectable-advertisement cache can be momentarily empty
+            # (e.g. right after startup, or right after this device's stale link
+            # was cleared above) and later attempts - especially the recovery
+            # retry after RECOVERY_WAIT_S - are specifically there to give it
+            # time to repopulate. Reusing a stale (possibly None) lookup across
+            # attempts defeats that wait entirely.
+            ble_device = self._ble_device_callback() if self._ble_device_callback else None
+            if ble_device is None:
+                # No known-good fallback exists here: a bare BleakClient(address)
+                # bypasses bleak-retry-connector's scanner routing and is
+                # guaranteed to fail with a confusing "never seen by any
+                # scanner" error even while HA's own scanners are actively
+                # seeing the device, because it carries no scanner/backend
+                # affinity at all. Fail with a clear message instead so the
+                # caller's retry-with-recovery-wait path gets a real chance of
+                # a fresh, successful lookup instead of a guaranteed failure.
+                raise MiniBigConnectionError(
+                    f"{address} is not currently visible to a connectable "
+                    "Bluetooth scanner (out of range, or its last connectable "
+                    "advertisement expired from Home Assistant's cache)"
                 )
-            else:
-                client = BleakClient(address)
-                await client.connect()
-            return client
+            return await establish_connection(
+                BleakClient,
+                ble_device,
+                self.device_info.name or address,
+                max_attempts=self.retry_count,
+            )
 
         try:
             if self._client is None or not self._client.is_connected:
