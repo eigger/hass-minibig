@@ -5,6 +5,14 @@
     {
       "service_uuid": "2b8d0001-6828-46af-98aa-557761b15400",
       "connectable": true
+    },
+    {
+      "local_name": "CLWM*",
+      "connectable": true
+    },
+    {
+      "local_name": "CLPM*",
+      "connectable": true
     }
   ],
   "codeowners": ["@eigger"],
@@ -14,5 +22,5 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/eigger/hass-minibig/issues",
   "requirements": [],
-  "version": "0.1.0"
+  "version": "0.1.1"
 }
