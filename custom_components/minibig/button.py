@@ -37,7 +37,7 @@ async def async_setup_entry(
     entities: list[ButtonEntity] = [
         MiniBigRestartButton(entry, data.active_coordinator),
         MiniBigRefreshButton(entry, data.active_coordinator),
-        MiniBigFactoryResetButton(entry, data.active_coordinator),
+        # MiniBigFactoryResetButton(entry, data.active_coordinator),
     ]
 
     # Device-side operations. Each needs its DP ID; unknown slots stay unexposed.
@@ -111,24 +111,6 @@ class MiniBigRefreshButton(MiniBigBaseButton):
         except Exception as err:
             raise HomeAssistantError(f"Failed to refresh MiniBig device: {err}") from err
 
-
-class MiniBigFactoryResetButton(MiniBigBaseButton):
-    """Button to factory reset the MiniBig device."""
-
-    _attr_entity_category = EntityCategory.CONFIG
-
-    def __init__(
-        self, entry: MiniBigConfigEntry, coordinator: MiniBigActiveCoordinator
-    ) -> None:
-        """Initialize factory reset button."""
-        super().__init__(entry, coordinator, "factory_reset", "factory_reset")
-
-    async def async_press(self) -> None:
-        """Handle button press to reset device to factory settings."""
-        try:
-            await self.entry.runtime_data.connection.factory_reset()
-        except Exception as err:
-            raise HomeAssistantError(f"Failed to factory reset MiniBig device: {err}") from err
 
 
 class MiniBigDpActionButton(MiniBigBaseButton):
