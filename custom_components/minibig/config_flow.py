@@ -75,7 +75,7 @@ class MiniBigConfigFlow(ConfigFlow, domain=DOMAIN):
         self._device_info = dev_info
 
         profile = get_device_profile(dev_info)
-        title = f"{profile.model_name} {dev_info.address[-8:]}"
+        title = dev_info.name or f"{profile.model_name} {dev_info.address[-8:]}"
         self.context["title_placeholders"] = {"name": title}
 
         return await self.async_step_bluetooth_confirm()
@@ -87,7 +87,7 @@ class MiniBigConfigFlow(ConfigFlow, domain=DOMAIN):
         assert self._device_info is not None
         dev_info = self._device_info
         profile = get_device_profile(dev_info)
-        title = f"{profile.model_name} {dev_info.address[-8:]}"
+        title = dev_info.name or f"{profile.model_name} {dev_info.address[-8:]}"
 
         if user_input is not None:
             return self.async_create_entry(
@@ -126,7 +126,7 @@ class MiniBigConfigFlow(ConfigFlow, domain=DOMAIN):
                         if not dev_info.supported or dev_info.d_type == 2:
                             return self.async_abort(reason="hubmini_not_supported")
                         profile = get_device_profile(dev_info)
-                        title = f"{profile.model_name} {dev_info.address[-8:]}"
+                        title = dev_info.name or f"{profile.model_name} {dev_info.address[-8:]}"
                         return self.async_create_entry(
                             title=title,
                             data={CONF_ADDRESS: dev_info.address},

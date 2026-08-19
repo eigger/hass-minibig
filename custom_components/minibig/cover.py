@@ -52,6 +52,7 @@ class MiniBigWindowOpenerCover(
     """Cover entity representing a MiniBig BLE Window Opener."""
 
     _attr_has_entity_name = True
+    _attr_name = None
     _attr_supported_features = (
         CoverEntityFeature.OPEN
         | CoverEntityFeature.CLOSE
