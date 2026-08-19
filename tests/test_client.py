@@ -285,3 +285,30 @@ async def test_slot_recovery_retry():
         mock_sleep.assert_called_with(12.0)
 
     await conn.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_generic_connect_failure_also_recovers():
+    """A plain connect timeout (not BleakOutOfConnectionSlotsError) must still
+    trigger the stale-link-clear-and-retry recovery, not fail immediately.
+
+    Real devices only accept one BLE link, and a dead peer connection can
+    surface as any exception type depending on platform/backend - not just
+    BleakOutOfConnectionSlotsError.
+    """
+    fake_client = FakeBleakClient(generic_error_once=True)
+    dev = _make_dev()
+
+    conn = MiniBigConnection(
+        device_info=dev,
+        client_override=fake_client,
+    )
+
+    with patch("custom_components.minibig.minibig_ble.client.asyncio.sleep", new_callable=AsyncMock) as mock_sleep, \
+         patch("custom_components.minibig.minibig_ble.client.close_stale_connections_by_address", new_callable=AsyncMock) as mock_close:
+        await conn.connect()
+        assert fake_client.is_connected is True
+        mock_close.assert_called()
+        mock_sleep.assert_called_with(12.0)
+
+    await conn.disconnect()

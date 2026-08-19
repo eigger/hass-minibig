@@ -14,7 +14,7 @@ from homeassistant.components.bluetooth import (
 from homeassistant.components.bluetooth.passive_update_processor import (
     PassiveBluetoothProcessorCoordinator,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import (
@@ -49,11 +49,13 @@ class MiniBigPassiveBluetoothProcessorCoordinator(
         """Initialize the passive BLE advertisement processor coordinator."""
         self.entry = entry
         self._last_device_info: MiniBigDeviceInfo | None = None
+        self._listeners: list[tuple[Callable[[], None], Any]] = []
 
         def _wrapped_update_method(service_info: BluetoothServiceInfoBleak) -> MiniBigDeviceInfo | None:
             info = update_method(service_info)
             if info:
                 self._last_device_info = info
+                self._async_update_listeners()
             return info
 
         super().__init__(hass, logger, address, mode, _wrapped_update_method, connectable)
@@ -62,6 +64,33 @@ class MiniBigPassiveBluetoothProcessorCoordinator(
     def last_device_info(self) -> MiniBigDeviceInfo | None:
         """Return the last parsed device info from advertisement."""
         return self._last_device_info
+
+    @callback
+    def async_add_listener(
+        self, update_callback: Callable[[], None], context: Any = None
+    ) -> Callable[[], None]:
+        """Listen for advertisement-derived data updates.
+
+        PassiveBluetoothProcessorCoordinator has no built-in per-entity
+        notification mechanism (only the heavier processor/entity-description
+        pattern from passive_update_processor). This implements the minimal
+        BaseDataUpdateCoordinatorProtocol surface so plain CoordinatorEntity
+        subclasses can subscribe directly, matching the rest of this
+        integration's entity code.
+        """
+        entry = (update_callback, context)
+        self._listeners.append(entry)
+
+        def _remove_listener() -> None:
+            self._listeners.remove(entry)
+
+        return _remove_listener
+
+    @callback
+    def _async_update_listeners(self) -> None:
+        """Notify all registered listeners."""
+        for update_callback, _context in list(self._listeners):
+            update_callback()
 
 
 class MiniBigActiveCoordinator(DataUpdateCoordinator[dict[int, int]]):

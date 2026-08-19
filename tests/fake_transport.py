@@ -15,6 +15,7 @@ class FakeBleakClient:
         address: str = "11:22:33:44:55:66",
         fail_connect: bool = False,
         slot_error_once: bool = False,
+        generic_error_once: bool = False,
     ) -> None:
         """Initialize fake client."""
         self.address = address
@@ -22,6 +23,8 @@ class FakeBleakClient:
         self.fail_connect = fail_connect
         self.slot_error_once = slot_error_once
         self._slot_error_occurred = False
+        self.generic_error_once = generic_error_once
+        self._generic_error_occurred = False
 
         self.written_frames: list[bytes] = []
         self.notify_callbacks: dict[str, Callable[[Any, bytearray], None]] = {}
@@ -38,6 +41,10 @@ class FakeBleakClient:
             self._slot_error_occurred = True
             from custom_components.minibig.minibig_ble.client import BleakOutOfConnectionSlotsError
             raise BleakOutOfConnectionSlotsError("No free connection slots")
+
+        if self.generic_error_once and not self._generic_error_occurred:
+            self._generic_error_occurred = True
+            raise TimeoutError("Timeout waiting for connect response")
 
         if self.fail_connect:
             raise ConnectionError("Failed to connect")

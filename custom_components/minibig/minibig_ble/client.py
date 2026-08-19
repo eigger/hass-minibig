@@ -52,6 +52,10 @@ from .writer import (
 
 _LOGGER = logging.getLogger(__name__)
 
+# The device only accepts one BLE link. After clearing a stale one, it needs a
+# moment before it starts advertising as connectable again.
+RECOVERY_WAIT_S = 12.0
+
 
 class MiniBigError(Exception):
     """Base exception for MiniBig BLE."""
@@ -289,24 +293,40 @@ class MiniBigConnection:
         try:
             if self._client is None or not self._client.is_connected:
                 self._client = await _attempt_connect()
-        except BleakOutOfConnectionSlotsError:
-            _LOGGER.warning(
-                "BLE connection slots exhausted for %s, waiting 12s to retry",
-                address,
-            )
+        except Exception as first_exc:
+            # The device accepts only one BLE link. A link that died without the
+            # peer noticing leaves it advertising as non-connectable, which
+            # surfaces here as anything from BleakOutOfConnectionSlotsError to a
+            # plain connect timeout depending on platform/backend. Either way the
+            # recovery is the same: clear the stale link and give the device a
+            # moment to start advertising as connectable again before one retry.
+            if isinstance(first_exc, BleakOutOfConnectionSlotsError):
+                _LOGGER.warning(
+                    "BLE connection slots exhausted for %s, clearing stale link "
+                    "and waiting %.0fs to retry",
+                    address,
+                    RECOVERY_WAIT_S,
+                )
+            else:
+                _LOGGER.warning(
+                    "Connect to %s failed (%s), clearing stale link and waiting "
+                    "%.0fs to retry",
+                    address,
+                    first_exc,
+                    RECOVERY_WAIT_S,
+                )
             try:
                 await close_stale_connections_by_address(address)
             except Exception:
                 pass
-            await asyncio.sleep(12.0)
+            await asyncio.sleep(RECOVERY_WAIT_S)
             try:
                 self._client = await _attempt_connect()
             except Exception as exc:
                 raise MiniBigConnectionError(
-                    f"Failed to connect to {address} after slot exhaustion retry: {exc}"
+                    f"Failed to connect to {address} after stale-link recovery "
+                    f"retry (first attempt: {first_exc}): {exc}"
                 ) from exc
-        except Exception as exc:
-            raise MiniBigConnectionError(f"Failed to connect to {address}: {exc}") from exc
 
         # Subscribe to notify characteristic
         try:
