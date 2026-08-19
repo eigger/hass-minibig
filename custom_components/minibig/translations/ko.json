@@ -102,7 +102,7 @@
     },
     "binary_sensor": {
       "moving": {
-        "name": "동작 중"
+        "name": "동작 상태"
       },
       "connectivity": {
         "name": "연결 상태"
