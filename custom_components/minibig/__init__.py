@@ -132,7 +132,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: MiniBigConfigEntry) -> b
         keep_connected=entry.options.get(CONF_KEEP_CONNECTED, DEFAULT_KEEP_CONNECTED),
         movement_idle_s=DEFAULT_MOVEMENT_IDLE_S,
         max_session_s=DEFAULT_MAX_SESSION_S,
-        retry_count=entry.options.get(CONF_RETRY_COUNT, DEFAULT_RETRY_COUNT),
+        # NumberSelector stores values as floats; bleak-retry-connector's
+        # max_attempts is typed as int, so coerce rather than pass a float.
+        retry_count=int(entry.options.get(CONF_RETRY_COUNT, DEFAULT_RETRY_COUNT)),
         loop=hass.loop,
     )
 
@@ -211,6 +213,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: MiniBigConfigEntry) -> b
         passive_coordinator=passive_coordinator,
         active_coordinator=active_coordinator,
     )
+
+    # Populate state once at startup. Without this, DataUpdateCoordinator only
+    # starts its interval timer when the first entity subscribes, so the first
+    # actual poll would not happen until a full poll_interval_min (30 min by
+    # default) had elapsed - leaving battery/position showing as unknown after
+    # every restart until the user pressed Refresh manually.
+    #
+    # async_config_entry_first_refresh() is deliberately not used: it raises
+    # ConfigEntryNotReady on failure, which would abort setup entirely. This
+    # device is battery powered and frequently out of range or busy with the
+    # official app, and a failed poll is explicitly treated as non-fatal
+    # elsewhere in this integration (see MiniBigActiveCoordinator).
+    await active_coordinator.async_refresh()
 
     # Register custom services once
     await _async_setup_services(hass)

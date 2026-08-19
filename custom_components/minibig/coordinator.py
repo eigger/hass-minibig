@@ -109,12 +109,18 @@ class MiniBigActiveCoordinator(DataUpdateCoordinator[dict[int, int]]):
         self.connection = connection
         self.profile = profile
 
-        poll_min = entry.options.get(CONF_POLL_INTERVAL_MIN, DEFAULT_POLL_INTERVAL_MIN)
+        # NumberSelector stores values as floats, so coerce back to int.
+        poll_min = int(entry.options.get(CONF_POLL_INTERVAL_MIN, DEFAULT_POLL_INTERVAL_MIN))
         interval = timedelta(minutes=poll_min) if poll_min > 0 else None
 
         super().__init__(
             hass,
             logger,
+            # Pass the entry explicitly rather than letting the base class fall
+            # back to the ContextVar: that fallback is deprecated upstream, and
+            # a coordinator without a config_entry silently loses the
+            # pref_disable_polling check and per-entry background task naming.
+            config_entry=entry,
             name=f"MiniBig Active Coordinator {entry.unique_id}",
             update_interval=interval,
         )
@@ -150,6 +156,7 @@ class MiniBigActiveCoordinator(DataUpdateCoordinator[dict[int, int]]):
 
     async def _async_update_data(self) -> dict[int, int]:
         """Perform active poll over BLE GATT."""
+        _LOGGER.debug("_async_update_data called for %s", self.entry.unique_id)
         # Skip polling while device is moving
         if self.connection.is_moving:
             _LOGGER.debug("Skipping poll for %s: device is currently moving", self.entry.unique_id)
@@ -173,8 +180,7 @@ class MiniBigActiveCoordinator(DataUpdateCoordinator[dict[int, int]]):
                 self.data = {**self.data, **resp.dps}
                 return self.data
         except Exception as err:
-            # Polling failures (e.g. app in use, range) should not mark entities unavailable
-            _LOGGER.debug("Active polling failed for %s (ignored): %s", self.entry.unique_id, err)
+            _LOGGER.warning("Active polling failed for %s: %s", self.entry.unique_id, err)
 
         return self.data or {}
 
