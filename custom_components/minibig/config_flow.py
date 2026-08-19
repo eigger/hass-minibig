@@ -161,7 +161,7 @@ class MiniBigConfigFlow(ConfigFlow, domain=DOMAIN):
         config_entry: ConfigEntry,
     ) -> OptionsFlowWithReload:
         """Get the options flow for this handler."""
-        return MiniBigOptionsFlowHandler(config_entry)
+        return MiniBigOptionsFlowHandler()
 
 
 class MiniBigOptionsFlowHandler(OptionsFlowWithReload):

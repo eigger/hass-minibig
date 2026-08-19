@@ -41,10 +41,6 @@ DEFAULT_STOP_DP = 3
 DEFAULT_POWER_DP = 0
 DEFAULT_BATTERY_DP = 10
 
-# Cover end-stop snap thresholds
-COVER_SNAP_LOW = 2
-COVER_SNAP_HIGH = 98
-
 # Platforms to load
 PLATFORMS: list[Platform] = [
     Platform.COVER,

@@ -122,14 +122,29 @@ For opcode `42 (PUB_DPS)` and opcode `43 (READ_DPS)`, payloads are serialized as
 +------------+--------------------+-------------------+
 ```
 
-#### Standard DP Mapping:
+#### Standard DP Mapping — Verified on Real Hardware
+
+Confirmed by capturing `43 (READ_DPS)` dumps on a CLWM-B06 window opener before and
+after isolated open/close/stop operations (2026-08-19). These four DPs cover
+everything the integration actively controls or reports.
 
 | DP ID | Target Device | Name / Function | Value Range | Units |
 |---|---|---|---|---|
-| `0` | Window Opener | Target / Current Position | `0` ~ `100` | % (0=Closed, 100=Open) |
+| `0` | Window Opener | Target / Current Position | `0` ~ `100` | % — `0` = fully closed, confirmed exact. Fully open settled at `97` on the tested unit (matched the vendor app's own reading exactly), not `100`; the value is passed through unmodified rather than rounded to an assumed endpoint. |
 | `0` | PushMini / Switch | Power / On-Off State | `0` or `1` | Boolean (0=Off, 1=On) |
-| `3` | Window Opener | Stop Movement | `0` | Trigger (returns current position) |
-| `10` | All Devices | Battery Level | `0` ~ `100` | % (Read-only response) |
+| `3` | Window Opener | Stop Movement | `0` | Trigger. Sent to a stationary motor, it returns the current position without any physical movement — used for passive polling. |
+| `10` | All Devices | Battery Level | `0` ~ `100` | % (read-only; drifts by a point or two between reads even at rest, treat as approximate) |
+
+A full `READ_DPS` dump on that same unit returned DP IDs `0`–`19` (20 triplets, no
+partial response). Beyond the four above, values on IDs `1,2,4–9,11,12,14–19` were
+observed to shift only during the vendor app's initial setup wizard (mount type,
+opening direction, travel-limit measurement) and stayed constant across ordinary
+open/close/stop cycles afterward — consistent with one-time commissioning data, not
+anything read or written during normal operation. Mapping those individually was
+deliberately not pursued: they are set once at physical installation and have no
+ongoing operational use. See §4.4 for the DP *codes* (not IDs) the vendor app uses
+for this class of settings, if a future need arises. `minibig.send_raw` (method 43)
+and `minibig.publish_dps` remain available for anyone who wants to identify them.
 
 ---
 

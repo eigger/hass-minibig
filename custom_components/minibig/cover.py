@@ -19,8 +19,6 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
     CONF_POSITION_DP_ID,
-    COVER_SNAP_HIGH,
-    COVER_SNAP_LOW,
     DEFAULT_STOP_DP,
     DOMAIN,
 )
@@ -134,11 +132,16 @@ class MiniBigWindowOpenerCover(
         self.async_write_ha_state()
 
     def _normalize_position(self, raw_val: int) -> int:
-        """Apply end-stop snapping to position (<=2% -> 0%, >=98% -> 100%)."""
-        if raw_val <= COVER_SNAP_LOW:
-            return 0
-        if raw_val >= COVER_SNAP_HIGH:
-            return 100
+        """Clamp dp0 to a valid 0-100 range without altering the value itself.
+
+        Earlier versions snapped values near the ends (<=2 -> 0, >=98 -> 100),
+        assuming the motor stops just short of its mechanical limits like the
+        reference implementation's window opener. Real hardware disproved
+        that for this device: a position confirmed as 97% in the official
+        vendor app was previously being snapped to 100% here, silently
+        disagreeing with the app's own reading. dp0 is passed through as-is;
+        only out-of-range values (e.g. a bad read) are clamped.
+        """
         return max(0, min(100, raw_val))
 
     @property
