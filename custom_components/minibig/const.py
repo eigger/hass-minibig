@@ -30,6 +30,9 @@ CONF_KEEP_CONNECTED = "keep_connected"
 CONF_POLL_INTERVAL_MIN = "poll_interval_min"
 CONF_RETRY_COUNT = "retry_count"
 
+CONF_COVER_DEVICE_CLASS = "cover_device_class"
+DEFAULT_COVER_DEVICE_CLASS = "window"
+
 # Custom DP ID injection for unconfirmed profiles
 CONF_POWER_DP_ID = "power_dp_id"
 CONF_POSITION_DP_ID = "position_dp_id"

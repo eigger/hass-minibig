@@ -18,7 +18,9 @@ from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
+    CONF_COVER_DEVICE_CLASS,
     CONF_POSITION_DP_ID,
+    DEFAULT_COVER_DEVICE_CLASS,
     DEFAULT_STOP_DP,
     DOMAIN,
 )
@@ -70,17 +72,8 @@ class MiniBigWindowOpenerCover(
         self._pos_dp = pos_dp
         self._stop_dp = stop_dp
         self._attr_unique_id = f"{entry.unique_id}_cover"
-        self._attr_translation_key = "window_opener"
-
-        name_lower = entry.runtime_data.device_info.name.lower()
-        if "curtain" in name_lower or name_lower.startswith("clwm"):
-            self._attr_device_class = CoverDeviceClass.CURTAIN
-        elif "blind" in name_lower:
-            self._attr_device_class = CoverDeviceClass.BLIND
-        elif "garage" in name_lower:
-            self._attr_device_class = CoverDeviceClass.GARAGE
-        else:
-            self._attr_device_class = CoverDeviceClass.WINDOW
+        class_str = entry.options.get(CONF_COVER_DEVICE_CLASS, DEFAULT_COVER_DEVICE_CLASS)
+        self._attr_device_class = CoverDeviceClass(class_str)
 
         address = entry.runtime_data.device_info.address
         self._attr_device_info = DeviceInfo(
