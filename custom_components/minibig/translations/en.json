@@ -39,26 +39,51 @@
           "keep_connected": "Maintains a permanent BLE connection. WARNING: The official smartphone app cannot connect while enabled, and device battery drain will increase.",
           "dp_overrides": "Advanced. Maps named settings to DP IDs discovered on your hardware, e.g. measure: 7. Leave empty unless you have captured them.",
           "cover_device_class": "Select the cover type that matches your device. Affects the icon and name shown in the Home Assistant UI."
-        },
-        "selector": {
-          "cover_device_class": {
-            "options": {
-              "window": "Window",
-              "curtain": "Curtain",
-              "blind": "Blind",
-              "garage": "Garage Door",
-              "shade": "Shade",
-              "awning": "Awning",
-              "door": "Door",
-              "damper": "Damper"
-            }
-          }
         }
       }
     }
   },
+  "selector": {
+    "cover_device_class": {
+      "options": {
+        "window": "Window",
+        "curtain": "Curtain",
+        "blind": "Blind",
+        "garage": "Garage Door",
+        "shade": "Shade",
+        "awning": "Awning",
+        "door": "Door",
+        "damper": "Damper"
+      }
+    }
+  },
   "entity": {
-    "cover": {},
+    "cover": {
+      "window": {
+        "name": "Window"
+      },
+      "curtain": {
+        "name": "Curtain"
+      },
+      "blind": {
+        "name": "Blind"
+      },
+      "garage": {
+        "name": "Garage Door"
+      },
+      "shade": {
+        "name": "Shade"
+      },
+      "awning": {
+        "name": "Awning"
+      },
+      "door": {
+        "name": "Door"
+      },
+      "damper": {
+        "name": "Damper"
+      }
+    },
     "switch": {
       "power": {
         "name": "Power"

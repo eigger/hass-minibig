@@ -52,7 +52,6 @@ class MiniBigWindowOpenerCover(
     """Cover entity representing a MiniBig BLE Window Opener."""
 
     _attr_has_entity_name = True
-    _attr_name = None
     _attr_supported_features = (
         CoverEntityFeature.OPEN
         | CoverEntityFeature.CLOSE
@@ -75,6 +74,7 @@ class MiniBigWindowOpenerCover(
         self._attr_unique_id = f"{entry.unique_id}_cover"
         class_str = entry.options.get(CONF_COVER_DEVICE_CLASS, DEFAULT_COVER_DEVICE_CLASS)
         self._attr_device_class = CoverDeviceClass(class_str)
+        self._attr_translation_key = class_str
 
         address = entry.runtime_data.device_info.address
         self._attr_device_info = DeviceInfo(

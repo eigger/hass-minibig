@@ -13,7 +13,11 @@
     },
     "binary_sensor": {
       "moving": {
-        "default": "mdi:motion"
+        "default": "mdi:motion-pause",
+        "state": {
+          "on": "mdi:motion-play",
+          "off": "mdi:motion-pause"
+        }
       },
       "connectivity": {
         "default": "mdi:bluetooth-connect"
