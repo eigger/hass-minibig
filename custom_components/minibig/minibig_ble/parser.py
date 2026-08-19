@@ -43,17 +43,26 @@ def parse_advertisement(service_info: Any) -> MiniBigDeviceInfo | None:
     if service_uuids is None and isinstance(service_info, dict):
         service_uuids = service_info.get("service_uuids", [])
 
-    if not service_uuids:
-        return None
-
     # Normalize UUIDs to lowercase
-    uuids_lower = {str(u).lower() for u in service_uuids}
+    uuids_lower = {str(u).lower() for u in service_uuids} if service_uuids else set()
 
     is_device = DEVICE_SERVICE_UUID.lower() in uuids_lower
     is_hubmini = HUBMINI_SERVICE_UUID.lower() in uuids_lower
 
-    if not is_device and not is_hubmini:
+    # Some devices (e.g. CLWM-B06) advertise without service UUIDs; fall back to
+    # name-based detection so they are still recognised via the manifest local_name matcher.
+    name_for_check = getattr(service_info, "name", None) or getattr(service_info, "local_name", None)
+    if name_for_check is None and isinstance(service_info, dict):
+        name_for_check = service_info.get("name") or service_info.get("local_name") or ""
+    name_lower_check = str(name_for_check or "").lower()
+
+    is_name_match = name_lower_check.startswith("clwm") or name_lower_check.startswith("clpm")
+    if not is_name_match and not is_device and not is_hubmini:
         return None
+
+    # For name-only matches treat as a standard device (not HubMini)
+    if not is_device and not is_hubmini and is_name_match:
+        is_device = True
 
     address = getattr(service_info, "address", None)
     if address is None and isinstance(service_info, dict):
@@ -98,15 +107,17 @@ def parse_advertisement(service_info: Any) -> MiniBigDeviceInfo | None:
 
     has_clpm = "clpm" in name.lower()
 
+    has_clwm = name.lower().startswith("clwm")
+
     try:
         if raw_manu is None or len(raw_manu) < 3:
-            if not has_clpm:
+            if not has_clpm and not has_clwm:
                 return None
             init_mode = False
             fv = 0
             rev = 0
             idv = "0000"
-            d_type = 1
+            d_type = 1 if has_clpm else 5
         else:
             byte2 = raw_manu[2]
             init_mode = bool(byte2 & 0x01)
@@ -125,6 +136,9 @@ def parse_advertisement(service_info: Any) -> MiniBigDeviceInfo | None:
                 d_type = raw_manu[13]
             elif is_hubmini:
                 d_type = 2
+            elif is_name_match:
+                # Name-matched device without full manufacturer data length; treat as cover type
+                d_type = 5
             else:
                 return None
 

@@ -243,6 +243,10 @@ def get_device_profile(dev: MiniBigDeviceInfo) -> DeviceProfile:
             return PROFILE_PUSH_MINI_LEGACY
         return PROFILE_PUSH_MINI_NEW
 
+    # d_type 5 = CurtainLite / Window Mini (e.g. CLWM-B06)
+    if dev.d_type == 5 or name_lower.startswith("clwm"):
+        return PROFILE_WINDOW_OPENER
+
     if any(k in name_lower for k in ("opener", "window", "curtain", "blind")):
         return PROFILE_WINDOW_OPENER
 
