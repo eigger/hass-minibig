@@ -92,6 +92,20 @@ class MiniBigPassiveBluetoothProcessorCoordinator(
         for update_callback, _context in list(self._listeners):
             update_callback()
 
+    @callback
+    def _async_handle_unavailable(self, service_info: BluetoothServiceInfoBleak) -> None:
+        """Handle the device going unavailable.
+
+        The base implementation flips `available` to False and notifies its
+        registered processors - but this integration subscribes plain
+        CoordinatorEntity instances through async_add_listener instead, which
+        the base class knows nothing about. Without this override those
+        entities are never told, so advertisement-derived state (RSSI, pairing
+        mode) keeps showing the last values seen before the device vanished.
+        """
+        super()._async_handle_unavailable(service_info)
+        self._async_update_listeners()
+
 
 class MiniBigActiveCoordinator(DataUpdateCoordinator[dict[int, int]]):
     """Coordinator for periodic active GATT polling and push event aggregation."""

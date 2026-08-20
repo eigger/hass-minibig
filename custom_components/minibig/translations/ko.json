@@ -107,6 +107,13 @@
       "connectivity": {
         "name": "연결 상태"
       },
+      "in_range": {
+        "name": "기기 감지",
+        "state": {
+          "off": "범위 밖",
+          "on": "범위 내"
+        }
+      },
       "init_mode": {
         "name": "페어링 모드"
       }

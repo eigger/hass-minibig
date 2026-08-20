@@ -30,11 +30,12 @@ except ImportError:
         client_class: Any,
         device: Any,
         name: str,
+        disconnected_callback: Any = None,
         max_attempts: int = 3,
         **kwargs: Any,
     ) -> Any:
         """Fallback establish connection."""
-        client = client_class(device)
+        client = client_class(device, disconnected_callback=disconnected_callback)
         await client.connect()
         return client
 
@@ -138,11 +139,16 @@ class MiniBigConnection:
 
         self._report_callbacks: list[Callable[[Response], None]] = []
         self._movement_callbacks: list[Callable[[bool], None]] = []
+        self._connection_callbacks: list[Callable[[bool], None]] = []
         self._background_tasks: set[asyncio.Task[Any]] = set()
 
         self._is_moving: bool = False
         self._last_status: int | None = None
         self._is_notifying: bool = False
+        # Last connection state pushed to callbacks, so repeated connect() /
+        # disconnect() calls that do not actually change the link state stay
+        # silent instead of re-notifying every subscriber.
+        self._notified_connected: bool = False
 
     def _get_loop(self) -> asyncio.AbstractEventLoop:
         """Get the active event loop."""
@@ -175,8 +181,17 @@ class MiniBigConnection:
 
     @property
     def is_connected(self) -> bool:
-        """Return True if BLE client is connected."""
-        return self._client is not None and self._client.is_connected
+        """Return True if a GATT link to the device is currently established.
+
+        This is the live link state, not "the device is in range": it is only
+        True between a successful connect() and the matching disconnect (idle
+        timeout, session guard, unload, or a drop reported by the BLE stack).
+        """
+        return (
+            self._client is not None
+            and self._client.is_connected
+            and self._is_notifying
+        )
 
     @property
     def is_moving(self) -> bool:
@@ -197,6 +212,40 @@ class MiniBigConnection:
         """Register callback for movement state changes."""
         self._movement_callbacks.append(callback)
         return lambda: self._movement_callbacks.remove(callback) if callback in self._movement_callbacks else None
+
+    def register_connection_callback(self, callback: Callable[[bool], None]) -> Callable[[], None]:
+        """Register callback for GATT link state changes."""
+        self._connection_callbacks.append(callback)
+        return lambda: self._connection_callbacks.remove(callback) if callback in self._connection_callbacks else None
+
+    def _notify_connection_state(self) -> None:
+        """Push the current link state to subscribers if it changed."""
+        connected = self.is_connected
+        if self._notified_connected == connected:
+            return
+        self._notified_connected = connected
+        for cb in list(self._connection_callbacks):
+            try:
+                cb(connected)
+            except Exception as err:
+                _LOGGER.error("Error in connection callback: %s", err)
+
+    def _on_client_disconnected(self, _client: Any) -> None:
+        """Handle a link drop reported by the BLE stack.
+
+        Without this, a link that dies on its own (device powered off, out of
+        range, another central taking the single available slot) leaves every
+        piece of derived state - notify subscription, movement, the
+        connectivity entity - showing a session that no longer exists until
+        the next command happens to fail.
+        """
+        _LOGGER.debug("BLE link to %s dropped by the stack", self.device_info.address)
+        self._is_notifying = False
+        if self._movement_timer_handle:
+            self._movement_timer_handle.cancel()
+            self._movement_timer_handle = None
+        self._set_moving(False)
+        self._notify_connection_state()
 
     def _set_moving(self, moving: bool) -> None:
         """Update moving state and notify callbacks."""
@@ -322,6 +371,7 @@ class MiniBigConnection:
                 BleakClient,
                 ble_device,
                 self.device_info.name or address,
+                disconnected_callback=self._on_client_disconnected,
                 max_attempts=self.retry_count,
             )
 
@@ -375,6 +425,7 @@ class MiniBigConnection:
 
         self._session_start_time = time.monotonic()
         self._touch()
+        self._notify_connection_state()
         _LOGGER.debug("Connected and notifications enabled for %s", address)
 
     async def disconnect(self) -> None:
@@ -412,6 +463,7 @@ class MiniBigConnection:
             except Exception as err:
                 _LOGGER.debug("Error disconnecting %s: %s", self.device_info.address, err)
 
+        self._notify_connection_state()
         _LOGGER.debug("Disconnected from %s", self.device_info.address)
 
     async def send_frame(

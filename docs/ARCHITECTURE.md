@@ -53,7 +53,7 @@ graph TD
 - **`cover.py`**: Window Opener entity with target positioning (0~100%, reported unmodified — verified to match the vendor app's own reading exactly, including non-round endpoints), immediate stop, direction tracking (`is_opening`/`is_closing`), and `RestoreEntity`.
 - **`switch.py`**: Power switch for Push/Switch devices with optimistic feedback and readback synchronization.
 - **`sensor.py`**: Battery level sensor (`dp10`), diagnostic RSSI sensor, and diagnostic last status sensor.
-- **`binary_sensor.py`**: Moving state (active when receiving `REPORT_DPS`), connectivity state (diagnostic), and pairing mode (diagnostic).
+- **`binary_sensor.py`**: Moving state (active when receiving `REPORT_DPS`), connectivity state (diagnostic — the live GATT link, driven by the connection manager's link-state callbacks, not by advertisements), in-range state (diagnostic — advertisement presence from the passive coordinator), and pairing mode (diagnostic).
 - **`button.py`**: Restart, Refresh, and Factory Reset buttons.
 
 ---

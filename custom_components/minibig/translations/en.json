@@ -107,6 +107,13 @@
       "connectivity": {
         "name": "Connectivity"
       },
+      "in_range": {
+        "name": "In Range",
+        "state": {
+          "off": "Out of range",
+          "on": "In range"
+        }
+      },
       "init_mode": {
         "name": "Pairing Mode"
       }
