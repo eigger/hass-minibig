@@ -394,3 +394,63 @@ async def test_ble_device_none_error_message_is_clear():
     ):
         with pytest.raises(MiniBigConnectionError, match=dev.address):
             await conn.connect()
+
+
+@pytest.mark.asyncio
+async def test_connection_state_callbacks_track_real_link():
+    """is_connected must follow the actual GATT link, and subscribers must be
+    notified on both edges - this is what the connectivity entity renders, so
+    a link that never happened must never read as connected."""
+    fake_client = FakeBleakClient()
+    dev = _make_dev()
+
+    def canned_response(written: bytes) -> bytes | None:
+        return bytes.fromhex("2afd000064")
+
+    fake_client.response_generator = canned_response
+
+    conn = MiniBigConnection(device_info=dev, client_override=fake_client)
+
+    events: list[bool] = []
+    unsub = conn.register_connection_callback(events.append)
+
+    assert conn.is_connected is False
+    assert events == []
+
+    await conn.send_dps([(0, 100)])
+    assert conn.is_connected is True
+    assert events == [True]
+
+    await conn.disconnect()
+    assert conn.is_connected is False
+    assert events == [True, False]
+
+    unsub()
+    await conn.send_dps([(0, 100)])
+    assert events == [True, False]
+
+
+@pytest.mark.asyncio
+async def test_stack_reported_disconnect_clears_state():
+    """A link dropped by the BLE stack (device powered off / out of range)
+    must clear the session state and notify subscribers, instead of leaving
+    the connectivity entity showing a session that no longer exists."""
+    fake_client = FakeBleakClient()
+    dev = _make_dev()
+    fake_client.response_generator = lambda written: bytes.fromhex("2afd000064")
+
+    conn = MiniBigConnection(device_info=dev, client_override=fake_client)
+
+    events: list[bool] = []
+    conn.register_connection_callback(events.append)
+
+    await conn.send_dps([(0, 100)])
+    assert events == [True]
+
+    # Simulate the peer vanishing without a clean disconnect handshake.
+    fake_client._is_connected = False
+    conn._on_client_disconnected(fake_client)
+
+    assert conn.is_connected is False
+    assert conn.is_moving is False
+    assert events == [True, False]

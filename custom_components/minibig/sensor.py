@@ -118,6 +118,16 @@ class MiniBigRssiSensor(MiniBigBaseSensor):
         super().__init__(entry, coordinator, "rssi", "rssi")
 
     @property
+    def available(self) -> bool:
+        """Return False once the device stops being seen by any scanner.
+
+        RSSI only means something for a device currently in range; keeping the
+        last received value on display would present a device that vanished
+        hours ago as if it were still there.
+        """
+        return self.coordinator.available
+
+    @property
     def native_value(self) -> int | None:
         """Return the RSSI value."""
         if self.coordinator.last_device_info:
