@@ -238,7 +238,7 @@ def get_device_profile(dev: MiniBigDeviceInfo) -> DeviceProfile:
 
     name_lower = dev.name.lower()
 
-    if dev.d_type == 1:
+    if dev.d_type == 1 or name_lower.startswith("clplm"):
         if dev.is_legacy:
             return PROFILE_PUSH_MINI_LEGACY
         return PROFILE_PUSH_MINI_NEW
