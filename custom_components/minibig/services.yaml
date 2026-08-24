@@ -2,7 +2,7 @@ send_raw:
   name: Send Raw Command
   description: Sends a raw command opcode and payload to the MiniBig device over BLE GATT. Fires a 'minibig_raw_response' event with the response.
   target:
-    device:
+    entity:
       integration: minibig
   fields:
     method:
@@ -27,7 +27,7 @@ publish_dps:
   name: Publish DPS
   description: Sets one or more DP values on the MiniBig device.
   target:
-    device:
+    entity:
       integration: minibig
   fields:
     dps:
