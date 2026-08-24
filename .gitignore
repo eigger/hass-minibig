@@ -62,3 +62,6 @@ venv.bak/
 *.swp
 *.swo
 *~
+
+# Claude Code local config
+.claude/
