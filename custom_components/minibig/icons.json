@@ -9,6 +9,9 @@
       },
       "factory_reset": {
         "default": "mdi:restore-alert"
+      },
+      "clear_errors": {
+        "default": "mdi:broom"
       }
     },
     "binary_sensor": {
@@ -36,6 +39,15 @@
     "sensor": {
       "last_status": {
         "default": "mdi:information-outline"
+      },
+      "last_failure": {
+        "default": "mdi:clock-alert-outline"
+      },
+      "last_error": {
+        "default": "mdi:alert-outline"
+      },
+      "error_count": {
+        "default": "mdi:alert-circle-outline"
       }
     }
   }

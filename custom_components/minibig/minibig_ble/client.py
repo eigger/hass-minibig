@@ -328,6 +328,13 @@ class MiniBigConnection:
             except Exception as err:
                 _LOGGER.error("Error in report callback: %s", err)
 
+    def clear_reports(self) -> None:
+        """Forget every recorded report and refresh whoever displays them."""
+        self.reports.clear()
+        # clear() keeps the listeners but does not call them, so a sensor
+        # showing the old count would stay stale until the next report.
+        self.reports._notify()
+
     def _file_session(
         self,
         cmd: _QueuedCommand,
