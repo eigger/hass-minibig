@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import dataclasses
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -349,7 +349,7 @@ async def test_ble_device_reresolved_and_fails_clearly_when_none():
     BleakClient - when no connectable device is currently known."""
     dev = _make_dev()
     call_count = {"n": 0}
-    sentinel_device = object()
+    sentinel_device = MagicMock(address=dev.address)
 
     def _ble_device_callback():
         call_count["n"] += 1
@@ -363,7 +363,7 @@ async def test_ble_device_reresolved_and_fails_clearly_when_none():
     fake_client.is_connected = True
 
     with patch(
-        "custom_components.minibig.minibig_ble.client.establish_connection",
+        "blesession.session.establish_connection",
         new_callable=AsyncMock,
         return_value=fake_client,
     ) as mock_establish, patch(

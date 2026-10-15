@@ -245,7 +245,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: MiniBigConfigEntry) -> 
     """Unload a MiniBig config entry."""
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         data = entry.runtime_data
-        await data.connection.disconnect()
+        await data.connection.close()
         data.active_coordinator.async_unload()
 
         _async_unload_services_if_empty(hass)

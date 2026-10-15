@@ -105,7 +105,7 @@ def build_session_report(
     """
     trace = trace if trace is not None else SessionTrace()
     facts: Mapping[str, Any] = radio_facts(hass, address, trace.link)
-    return build_report(
+    report = build_report(
         operation=operation,
         trace=trace,
         exc=exc,
@@ -113,3 +113,8 @@ def build_session_report(
         cause=_cause,
         noun="device",
     )
+    # The link is held across commands (keep=True), so ble_session's own
+    # "session" block is empty; the real work is the subscribe/write/response
+    # stages. Its ~0 s would read as "the session took no time".
+    report.pop("session_s", None)
+    return report

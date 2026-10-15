@@ -10,13 +10,11 @@ from dataclasses import dataclass
 from typing import Any
 
 from bleak import BleakClient
-
 from bleak_retry_connector import (
     BleakOutOfConnectionSlotsError,
     close_stale_connections_by_address,
-    establish_connection,
 )
-from blesession import SessionReports, SessionTrace, fallback_report, stages
+from blesession import DISCONNECT_TIMEOUT_S, SessionReports, SessionTrace, Unreachable, ble_session, fallback_report, stages
 
 from .const import STATUS_MESSAGES, Opcode, StatusCode
 from .parser import MiniBigDeviceInfo
@@ -133,6 +131,10 @@ class MiniBigConnection:
         self._write_lock = asyncio.Lock()
 
         self._idle_timer_handle: asyncio.TimerHandle | None = None
+        self._touch_generation = 0
+        self._session_guard_pending = False
+        self._closing = False
+        self._inflight_command: _QueuedCommand | None = None
         self._movement_timer_handle: asyncio.TimerHandle | None = None
         self._session_start_time: float | None = None
 
@@ -272,22 +274,46 @@ class MiniBigConnection:
                     self.max_session_s,
                     self.device_info.address,
                 )
-                self._schedule_disconnect()
+                if not self._session_guard_pending:
+                    self._session_guard_pending = True
+                    started = self._session_start_time
+                    self._schedule_disconnect(lambda: self._session_start_time == started, guard=True)
                 return
 
             if self._idle_timer_handle:
                 self._idle_timer_handle.cancel()
+            self._touch_generation += 1
+            generation = self._touch_generation
             self._idle_timer_handle = loop.call_later(
                 self.idle_disconnect_s,
                 self._schedule_disconnect,
+                lambda: generation == self._touch_generation,
             )
 
-    def _schedule_disconnect(self) -> None:
+    def _schedule_disconnect(self, still_wanted: Callable[[], bool], guard: bool = False) -> None:
         """Schedule disconnect in background task."""
         loop = self._get_loop()
-        task = loop.create_task(self.disconnect())
+        task = loop.create_task(self._disconnect_when_idle(still_wanted, guard))
         self._background_tasks.add(task)
         task.add_done_callback(self._background_tasks.discard)
+
+    async def _disconnect_when_idle(self, still_wanted: Callable[[], bool], guard: bool) -> None:
+        """Disconnect once no command is using the link.
+
+        Waiting for the session lock keeps the disconnect from tearing the
+        link down under a connect or write that is in flight. Once it has the
+        lock, ``still_wanted`` says whether the link is still the idle (or
+        over-long) one this was scheduled for, and a queued command means it
+        is not idle: that command must not be failed with "Disconnected".
+        """
+        try:
+            async with self._session_lock:
+                if not still_wanted() or self._pending_command is not None:
+                    return
+                await self.disconnect()
+        finally:
+            if guard:
+                self._session_guard_pending = False
 
     def _on_notify(self, _characteristic: Any, data: bytearray | bytes) -> None:
         """Handle incoming GATT notify packet."""
@@ -370,7 +396,9 @@ class MiniBigConnection:
         """
         if isinstance(exc, asyncio.CancelledError):
             return
-        if cmd.operation == OPERATION_POLL and (exc is None or trace.failed_primary == stages.CONNECT):
+        if cmd.operation == OPERATION_POLL and (
+            exc is None or trace.failed_primary in (stages.CONNECT, stages.UNREACHABLE)
+        ):
             return
         if isinstance(exc, MiniBigDeviceError) and exc.status == StatusCode.DEVICE_SAME_DIRECTION:
             # Already where it was asked to go: the command's purpose is met.
@@ -392,23 +420,21 @@ class MiniBigConnection:
         address = self.device_info.address
         _LOGGER.debug("Connecting to %s", address)
 
-        # Clear any stale connection prior to connecting
-        try:
-            await close_stale_connections_by_address(address)
-        except Exception:
-            pass
+        trace = trace if trace is not None else SessionTrace(stage_map=STAGE_MAP)
 
-        async def _attempt_connect() -> Any:
+        async def _attempt_connect(*, first: bool) -> Any:
             if self._client_override is not None:
-                await self._client_override.connect()
+                if not self._client_override.is_connected:
+                    with trace.timed("connect"):
+                        await self._client_override.connect()
                 return self._client_override
             # Re-resolve on every attempt, not once for the whole connect() call.
             # HA's own connectable-advertisement cache can be momentarily empty
             # (e.g. right after startup, or right after this device's stale link
-            # was cleared above) and later attempts - especially the recovery
-            # retry after RECOVERY_WAIT_S - are specifically there to give it
-            # time to repopulate. Reusing a stale (possibly None) lookup across
-            # attempts defeats that wait entirely.
+            # was cleared) and later attempts - especially the recovery retry
+            # after RECOVERY_WAIT_S - are specifically there to give it time to
+            # repopulate. Reusing a stale (possibly None) lookup across attempts
+            # defeats that wait entirely.
             ble_device = self._ble_device_callback() if self._ble_device_callback else None
             if ble_device is None:
                 # No known-good fallback exists here: a bare BleakClient(address)
@@ -419,24 +445,26 @@ class MiniBigConnection:
                 # affinity at all. Fail with a clear message instead so the
                 # caller's retry-with-recovery-wait path gets a real chance of
                 # a fresh, successful lookup instead of a guaranteed failure.
-                raise MiniBigConnectionError(
-                    f"{address} is not currently visible to a connectable "
-                    "Bluetooth scanner (out of range, or its last connectable "
-                    "advertisement expired from Home Assistant's cache)"
-                )
-            return await establish_connection(
-                BleakClient,
+                trace.fail(stages.UNREACHABLE)
+                raise Unreachable(address)
+            # keep=True: the link outlives this block and is ours to close
+            # (idle timer / disconnect()). A previous handle that is no longer
+            # up is closed by ble_session before it opens a fresh one, so a
+            # dead link never keeps holding the device's single slot.
+            async with ble_session(
                 ble_device,
-                self.device_info.name or address,
+                trace=trace,
+                name=self.device_info.name or address,
+                client=self._client,
+                keep=True,
+                close_stale=first,
                 disconnected_callback=self._on_client_disconnected,
                 max_attempts=self.retry_count,
-            )
+            ) as client:
+                return client
 
-        trace = trace if trace is not None else SessionTrace(stage_map=STAGE_MAP)
         try:
-            if self._client is None or not self._client.is_connected:
-                with trace.timed("connect"):
-                    self._client = await _attempt_connect()
+            self._client = await _attempt_connect(first=True)
         except Exception as first_exc:
             # The device accepts only one BLE link. A link that died without the
             # peer noticing leaves it advertising as non-connectable, which
@@ -444,7 +472,10 @@ class MiniBigConnection:
             # plain connect timeout depending on platform/backend. Either way the
             # recovery is the same: clear the stale link and give the device a
             # moment to start advertising as connectable again before one retry.
-            if isinstance(first_exc, BleakOutOfConnectionSlotsError):
+            # blesession wraps the bleak error in ConnectFailed, so look at the cause too.
+            if isinstance(first_exc, BleakOutOfConnectionSlotsError) or isinstance(
+                first_exc.__cause__, BleakOutOfConnectionSlotsError
+            ):
                 _LOGGER.warning(
                     "BLE connection slots exhausted for %s, clearing stale link "
                     "and waiting %.0fs to retry",
@@ -463,14 +494,18 @@ class MiniBigConnection:
                 await close_stale_connections_by_address(address)
             except Exception:
                 pass
+            # Let the retry's own failure, not the first one, name the stage.
+            first_stage = trace.failed_stage
+            trace.forgive()
+            if first_stage is not None:
+                trace.note(first_failed_stage=first_stage)
             with trace.timed("recovery_wait"):
                 await asyncio.sleep(RECOVERY_WAIT_S)
             try:
-                with trace.timed("connect"):
-                    self._client = await _attempt_connect()
+                self._client = await _attempt_connect(first=False)
                 # The first attempt failed but the recovery worked: the
                 # command went on, so the report must not blame connect.
-                trace.forgive("connect")
+                trace.forgive()
                 trace.note(connect_recovered=True)
             except Exception as exc:
                 raise MiniBigConnectionError(
@@ -525,12 +560,36 @@ class MiniBigConnection:
                 self._client = None
             try:
                 if client.is_connected:
-                    await client.disconnect()
+                    # Bounded: this can run holding the session lock, and a
+                    # proxy that hung the session can hang the close too.
+                    async with asyncio.timeout(DISCONNECT_TIMEOUT_S):
+                        await client.disconnect()
             except Exception as err:
                 _LOGGER.debug("Error disconnecting %s: %s", self.device_info.address, err)
 
         self._notify_connection_state()
         _LOGGER.debug("Disconnected from %s", self.device_info.address)
+
+    async def close(self) -> None:
+        """Stop for good: refuse new commands, stop the worker, drop the link.
+
+        Used on unload. Plain disconnect() leaves a worker that is in the
+        middle of connecting free to finish and leave a fresh link behind,
+        which would keep holding the device's single slot.
+        """
+        self._closing = True
+        # A queued command must not start a new connect while we shut down.
+        if self._pending_command is not None and not self._pending_command.user_future.done():
+            self._pending_command.user_future.set_exception(MiniBigConnectionError("Connection is closed"))
+        self._pending_command = None
+        worker = self._worker_task
+        if worker is not None and not worker.done():
+            worker.cancel()
+            await asyncio.gather(worker, return_exceptions=True)
+        if self._inflight_command is not None and not self._inflight_command.user_future.done():
+            self._inflight_command.user_future.cancel()
+        self._inflight_command = None
+        await self.disconnect()
 
     async def send_frame(
         self,
@@ -544,6 +603,8 @@ class MiniBigConnection:
         ``operation`` names the caller (poll / command / service) in the
         session report; it does not change how the frame is sent.
         """
+        if self._closing:
+            raise MiniBigConnectionError("Connection is closed")
         timeout_val = timeout if timeout is not None else self.command_timeout
         loop = self._get_loop()
         user_future: asyncio.Future[Response] = loop.create_future()
@@ -587,13 +648,14 @@ class MiniBigConnection:
         """Worker loop that executes queued commands one by one, picking only the latest."""
         loop = self._get_loop()
         async with self._session_lock:
-            while self._pending_command is not None:
+            while self._pending_command is not None and not self._closing:
                 cmd = self._pending_command
                 self._pending_command = None
 
                 if cmd.user_future.done():
                     continue
 
+                self._inflight_command = cmd
                 trace = SessionTrace(stage_map=STAGE_MAP)
                 try:
                     await self.connect(trace)
