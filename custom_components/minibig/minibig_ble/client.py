@@ -6,6 +6,7 @@ import asyncio
 import logging
 import time
 from collections.abc import Callable
+from functools import partial
 from dataclasses import dataclass
 from typing import Any
 
@@ -55,6 +56,8 @@ STAGE_MAP = {
 OPERATION_POLL = "poll"
 OPERATION_COMMAND = "command"
 OPERATION_SERVICE = "service"
+
+_NO_TOKEN = object()
 
 SessionReportBuilder = Callable[[str, SessionTrace, BaseException | None], dict[str, Any]]
 
@@ -148,6 +151,10 @@ class MiniBigConnection:
         # Which radio the current link went over, kept so commands that reuse
         # the link still report it (they never pass through ble_session).
         self._link: LinkInfo | None = None
+        # Identifies the link whose drop events count. A late disconnect event
+        # from a link we already replaced (a proxy can deliver it long after)
+        # must not fail a command running on the new one.
+        self._link_token: object | None = None
         self._movement_timer_handle: asyncio.TimerHandle | None = None
         self._session_start_time: float | None = None
 
@@ -247,7 +254,7 @@ class MiniBigConnection:
             except Exception as err:
                 _LOGGER.error("Error in connection callback: %s", err)
 
-    def _on_client_disconnected(self, _client: Any) -> None:
+    def _on_client_disconnected(self, _client: Any, token: object = _NO_TOKEN) -> None:
         """Handle a link drop reported by the BLE stack.
 
         Without this, a link that dies on its own (device powered off, out of
@@ -256,6 +263,9 @@ class MiniBigConnection:
         connectivity entity - showing a session that no longer exists until
         the next command happens to fail.
         """
+        if token is not _NO_TOKEN and token is not self._link_token:
+            _LOGGER.debug("Ignoring a late drop event from a replaced link to %s", self.device_info.address)
+            return
         _LOGGER.debug("BLE link to %s dropped by the stack", self.device_info.address)
         self._is_notifying = False
         if self._movement_timer_handle:
@@ -444,7 +454,7 @@ class MiniBigConnection:
         address = self.device_info.address
         _LOGGER.debug("Connecting to %s", address)
 
-        async def _attempt_connect(*, first: bool) -> Any:
+        async def _attempt_connect(*, first: bool, token: object) -> Any:
             if self._client_override is not None:
                 if not self._client_override.is_connected:
                     with trace.timed("connect"):
@@ -480,13 +490,17 @@ class MiniBigConnection:
                 client=self._client,
                 keep=True,
                 close_stale=first,
-                disconnected_callback=self._on_client_disconnected,
+                disconnected_callback=partial(self._on_client_disconnected, token=token),
                 max_attempts=self.retry_count,
             ) as client:
                 return client
 
+        previous = self._client
+        token = object()
         try:
-            self._client = await _attempt_connect(first=True)
+            self._client = await _attempt_connect(first=True, token=token)
+            if self._client is not previous:
+                self._link_token = token
         except Exception as first_exc:
             # The device accepts only one BLE link. A link that died without the
             # peer noticing leaves it advertising as non-connectable, which
@@ -523,8 +537,12 @@ class MiniBigConnection:
                 trace.note(first_failed_stage=first_stage)
             with trace.timed("recovery_wait"):
                 await asyncio.sleep(RECOVERY_WAIT_S)
+            previous = self._client
+            token = object()
             try:
-                self._client = await _attempt_connect(first=False)
+                self._client = await _attempt_connect(first=False, token=token)
+                if self._client is not previous:
+                    self._link_token = token
                 # The first attempt failed but the recovery worked: the
                 # command went on, so the report must not blame connect.
                 trace.forgive()
@@ -572,6 +590,7 @@ class MiniBigConnection:
         self._session_start_time = None
         self._is_notifying = False
         self._link = None
+        self._link_token = None
 
         # Cancel pending queued command
         if fail_pending and self._pending_command and not self._pending_command.user_future.done():

@@ -508,6 +508,10 @@ async def test_ble_session_closes_a_dropped_but_open_handle_and_reuses_a_live_on
         assert first.is_connected is False
         assert conn._client is second
 
+        # A late drop event from the replaced link must not touch the new one.
+        callbacks[0](first)
+        assert conn.is_connected is True
+
     await conn.disconnect()
 
 
@@ -586,7 +590,9 @@ async def test_close_does_not_start_a_queued_command_while_a_response_is_awaited
 
     assert len(client.written_frames) == writes_before
     results = await asyncio.gather(first, queued, return_exceptions=True)
-    assert all(isinstance(r, BaseException) for r in results)
+    for result in results:
+        assert isinstance(result, MiniBigConnectionError)
+        assert "closed" in str(result)
     assert not client.is_connected
 
 
@@ -661,3 +667,30 @@ async def test_subscribe_failure_does_not_fail_a_command_queued_meanwhile():
     assert isinstance(results[0], MiniBigConnectionError)
     assert results[1].ok
     await conn.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_link_info_is_stored_on_connect_reused_and_cleared_on_disconnect():
+    from unittest.mock import AsyncMock
+
+    client = FakeBleakClient()
+    client._is_connected = True
+    client.response_generator = _ack
+    traces: list[SessionTrace] = []
+
+    def builder(operation, trace, exc):
+        traces.append(trace)
+        return {"operation": operation, "success": exc is None}
+
+    conn = _real_path_conn(report_builder=builder)
+    with patch("blesession.session.establish_connection", new_callable=AsyncMock, return_value=client):
+        await conn.send_dps([(0, 1)])
+        await conn.send_dps([(0, 2)])
+
+    assert traces[0].link is not None
+    assert traces[1].link is traces[0].link
+    assert traces[1].facts["reused"] is True
+    assert conn._link is traces[0].link
+
+    await conn.disconnect()
+    assert conn._link is None
