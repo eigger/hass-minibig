@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Any
 
 from blesession import (
     Failure,
+    SessionDropped,
     SessionTrace,
     build_report,
     generic_cause,
@@ -50,6 +51,9 @@ def _device_cause(failure: Failure) -> str | None:
     if isinstance(exc, MiniBigDeviceError):
         # The device answered: never fall through to the "no answer" wording.
         return _DEVICE_FAULTS.get(exc.status, f"The device refused the command ({exc}).")
+    if isinstance(exc, SessionDropped):
+        # The shared sentence names a dropped link precisely.
+        return None
     where = failure.detail or failure.stage
     if where == stages.CONNECT:
         return (

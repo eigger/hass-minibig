@@ -14,7 +14,17 @@ from bleak_retry_connector import (
     BleakOutOfConnectionSlotsError,
     close_stale_connections_by_address,
 )
-from blesession import DISCONNECT_TIMEOUT_S, SessionReports, SessionTrace, Unreachable, ble_session, fallback_report, stages
+from blesession import (
+    DISCONNECT_TIMEOUT_S,
+    LinkInfo,
+    SessionDropped,
+    SessionReports,
+    SessionTrace,
+    Unreachable,
+    ble_session,
+    fallback_report,
+    stages,
+)
 
 from .const import STATUS_MESSAGES, Opcode, StatusCode
 from .parser import MiniBigDeviceInfo
@@ -135,6 +145,9 @@ class MiniBigConnection:
         self._session_guard_pending = False
         self._closing = False
         self._inflight_command: _QueuedCommand | None = None
+        # Which radio the current link went over, kept so commands that reuse
+        # the link still report it (they never pass through ble_session).
+        self._link: LinkInfo | None = None
         self._movement_timer_handle: asyncio.TimerHandle | None = None
         self._session_start_time: float | None = None
 
@@ -249,6 +262,12 @@ class MiniBigConnection:
             self._movement_timer_handle.cancel()
             self._movement_timer_handle = None
         self._set_moving(False)
+        # A command waiting for its answer will never get it: fail it now as a
+        # dropped link rather than after command_timeout as a slow device.
+        if self._current_waiter is not None and not self._current_waiter.done():
+            self._current_waiter.set_exception(
+                SessionDropped(f"The link to {self.device_info.address} dropped while waiting for the response")
+            )
         self._notify_connection_state()
 
     def _set_moving(self, moving: bool) -> None:
@@ -414,13 +433,16 @@ class MiniBigConnection:
 
     async def connect(self, trace: SessionTrace | None = None) -> None:
         """Establish BLE GATT connection and start notifications."""
+        trace = trace if trace is not None else SessionTrace(stage_map=STAGE_MAP)
         if self.is_connected and self._is_notifying:
+            # Reusing the live link: there is no connect stage, so say so, and
+            # keep reporting the radio the link was opened over.
+            trace.link = self._link
+            trace.note(reused=True)
             return
 
         address = self.device_info.address
         _LOGGER.debug("Connecting to %s", address)
-
-        trace = trace if trace is not None else SessionTrace(stage_map=STAGE_MAP)
 
         async def _attempt_connect(*, first: bool) -> Any:
             if self._client_override is not None:
@@ -519,18 +541,25 @@ class MiniBigConnection:
                 await self._client.start_notify(self.device_info.notify_uuid, self._on_notify)
             self._is_notifying = True
         except Exception as exc:
-            await self.disconnect()
+            # A command queued meanwhile has not run yet: leave it for the
+            # next loop instead of failing it with "Disconnected".
+            await self.disconnect(fail_pending=False)
             raise MiniBigConnectionError(
                 f"Failed to subscribe to notify on {address}: {exc}"
             ) from exc
 
+        self._link = trace.link
         self._session_start_time = time.monotonic()
         self._touch()
         self._notify_connection_state()
         _LOGGER.debug("Connected and notifications enabled for %s", address)
 
-    async def disconnect(self) -> None:
-        """Disconnect BLE connection and cancel all timers and in-flight waiters."""
+    async def disconnect(self, *, fail_pending: bool = True) -> None:
+        """Disconnect BLE connection and cancel all timers and in-flight waiters.
+
+        ``fail_pending=False`` leaves a queued command alone, for cleanup done
+        by the worker itself between two commands.
+        """
         if self._idle_timer_handle:
             self._idle_timer_handle.cancel()
             self._idle_timer_handle = None
@@ -542,9 +571,10 @@ class MiniBigConnection:
         self._set_moving(False)
         self._session_start_time = None
         self._is_notifying = False
+        self._link = None
 
         # Cancel pending queued command
-        if self._pending_command and not self._pending_command.user_future.done():
+        if fail_pending and self._pending_command and not self._pending_command.user_future.done():
             self._pending_command.user_future.set_exception(MiniBigConnectionError("Disconnected"))
             self._pending_command = None
 
@@ -587,7 +617,7 @@ class MiniBigConnection:
             worker.cancel()
             await asyncio.gather(worker, return_exceptions=True)
         if self._inflight_command is not None and not self._inflight_command.user_future.done():
-            self._inflight_command.user_future.cancel()
+            self._inflight_command.user_future.set_exception(MiniBigConnectionError("Connection is closed"))
         self._inflight_command = None
         await self.disconnect()
 
@@ -666,6 +696,9 @@ class MiniBigConnection:
                     continue
 
                 internal_future: asyncio.Future[Response] = loop.create_future()
+                # A drop during the write sets an exception nobody awaits yet;
+                # retrieve it so asyncio does not log it as never retrieved.
+                internal_future.add_done_callback(lambda f: f.cancelled() or f.exception())
                 self._current_waiter = internal_future
                 self._current_method = cmd.expected_method
 
@@ -709,7 +742,11 @@ class MiniBigConnection:
                     continue
                 except asyncio.CancelledError:
                     if not cmd.user_future.done():
-                        cmd.user_future.cancel()
+                        if self._closing:
+                            # Unload: callers get an ordinary error, not a cancellation.
+                            cmd.user_future.set_exception(MiniBigConnectionError("Connection is closed"))
+                        else:
+                            cmd.user_future.cancel()
                     continue
                 except Exception as exc:
                     self._file_session(cmd, trace, exc)

@@ -554,7 +554,8 @@ async def test_close_stops_a_worker_stuck_in_recovery_and_refuses_new_commands()
         await asyncio.sleep(0.05)  # worker is now in the recovery wait
         await asyncio.wait_for(conn.close(), timeout=1.0)
 
-    with pytest.raises(asyncio.CancelledError):
+    # Callers get an ordinary error on unload, not a bare cancellation.
+    with pytest.raises(MiniBigConnectionError, match="closed"):
         await command
     assert not client.is_connected
     with pytest.raises(MiniBigConnectionError, match="closed"):
@@ -587,3 +588,76 @@ async def test_close_does_not_start_a_queued_command_while_a_response_is_awaited
     results = await asyncio.gather(first, queued, return_exceptions=True)
     assert all(isinstance(r, BaseException) for r in results)
     assert not client.is_connected
+
+
+@pytest.mark.asyncio
+async def test_link_drop_while_waiting_fails_fast_and_is_reported_as_a_drop():
+    client = FakeBleakClient()
+    client.response_generator = lambda w: None  # no answer will come
+
+    def builder(operation, trace, exc):
+        with patch.object(session_report, "radio_facts", return_value={}):
+            return session_report.build_session_report(None, "aa", operation=operation, trace=trace, exc=exc)
+
+    conn = _conn(client, command_timeout=30.0, report_builder=builder)
+    command = asyncio.ensure_future(conn.send_dps([(0, 1)]))
+    await asyncio.sleep(0.05)  # written, waiting for the response
+
+    client._is_connected = False
+    conn._on_client_disconnected(client)
+
+    with pytest.raises(ConnectionError, match="dropped"):
+        await asyncio.wait_for(command, timeout=1.0)
+    failure = conn.reports.last_failure
+    assert failure["failed_detail"] == "response"
+    assert "went away mid-session" in failure["likely_cause"]
+    assert "did not answer in time" not in failure["likely_cause"]
+    await conn.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_reused_link_keeps_reporting_how_it_was_opened():
+    client = FakeBleakClient()
+    client.response_generator = _ack
+    seen: list[SessionTrace] = []
+
+    def builder(operation, trace, exc):
+        seen.append(trace)
+        return {"operation": operation, "success": exc is None, **trace.facts}
+
+    conn = _conn(client, report_builder=builder)
+    link = object()
+    await conn.send_dps([(0, 1)])
+    conn._link = link  # as ble_session's probe_link would have recorded
+    await conn.send_dps([(0, 2)])
+
+    assert seen[1].link is link
+    assert conn.reports.last["reused"] is True
+    await conn.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_subscribe_failure_does_not_fail_a_command_queued_meanwhile():
+    client = FakeBleakClient()
+    client.response_generator = _ack
+    real_start_notify = client.start_notify
+    calls = {"n": 0}
+
+    async def flaky_start_notify(*args, **kwargs):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            await asyncio.sleep(0.05)  # time for a second command to queue up
+            raise ConnectionError("no notify")
+        return await real_start_notify(*args, **kwargs)
+
+    client.start_notify = flaky_start_notify
+    conn = _conn(client)
+
+    first = asyncio.ensure_future(conn.send_dps([(0, 1)]))
+    await asyncio.sleep(0.01)
+    second = asyncio.ensure_future(conn.send_dps([(0, 2)]))
+
+    results = await asyncio.gather(first, second, return_exceptions=True)
+    assert isinstance(results[0], MiniBigConnectionError)
+    assert results[1].ok
+    await conn.disconnect()
