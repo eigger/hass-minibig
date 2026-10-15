@@ -39,10 +39,12 @@ from .minibig_ble import (
     DEVICE_SERVICE_UUID,
     DEVICE_WRITE_UUID,
     MiniBigConnection,
+    OPERATION_SERVICE,
     MiniBigDeviceInfo,
     get_device_profile,
     parse_advertisement,
 )
+from .session_report import build_session_report
 from .types import MiniBigConfigEntry, MiniBigData
 
 _LOGGER = logging.getLogger(__name__)
@@ -136,6 +138,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: MiniBigConfigEntry) -> b
         # max_attempts is typed as int, so coerce rather than pass a float.
         retry_count=int(entry.options.get(CONF_RETRY_COUNT, DEFAULT_RETRY_COUNT)),
         loop=hass.loop,
+        report_builder=lambda operation, trace, exc: build_session_report(
+            hass, address, operation=operation, trace=trace, exc=exc
+        ),
     )
 
     passive_coordinator = MiniBigPassiveBluetoothProcessorCoordinator(
@@ -329,7 +334,7 @@ async def _async_setup_services(hass: HomeAssistant) -> None:
                 continue
 
             try:
-                await entry.runtime_data.connection.send_dps(dps)
+                await entry.runtime_data.connection.send_dps(dps, operation=OPERATION_SERVICE)
             except Exception as err:
                 _LOGGER.error("publish_dps command failed for %s: %s", device_id, err)
                 errors.append(f"{device_id}: {err}")

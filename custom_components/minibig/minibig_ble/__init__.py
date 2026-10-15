@@ -1,6 +1,10 @@
 """MiniBig BLE protocol package."""
 
 from .client import (
+    OPERATION_COMMAND,
+    OPERATION_POLL,
+    OPERATION_SERVICE,
+    STAGE_MAP,
     MiniBigConnection,
     MiniBigConnectionError,
     MiniBigDeviceError,
@@ -57,6 +61,10 @@ from .writer import (
 )
 
 __all__ = [
+    "OPERATION_COMMAND",
+    "OPERATION_POLL",
+    "OPERATION_SERVICE",
+    "STAGE_MAP",
     "DEVICE_NOTIFY_UUID",
     "DEVICE_SERVICE_UUID",
     "DEVICE_WRITE_UUID",
