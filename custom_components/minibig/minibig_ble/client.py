@@ -578,6 +578,10 @@ class MiniBigConnection:
         which would keep holding the device's single slot.
         """
         self._closing = True
+        # A queued command must not start a new connect while we shut down.
+        if self._pending_command is not None and not self._pending_command.user_future.done():
+            self._pending_command.user_future.set_exception(MiniBigConnectionError("Connection is closed"))
+        self._pending_command = None
         worker = self._worker_task
         if worker is not None and not worker.done():
             worker.cancel()
@@ -644,7 +648,7 @@ class MiniBigConnection:
         """Worker loop that executes queued commands one by one, picking only the latest."""
         loop = self._get_loop()
         async with self._session_lock:
-            while self._pending_command is not None:
+            while self._pending_command is not None and not self._closing:
                 cmd = self._pending_command
                 self._pending_command = None
 

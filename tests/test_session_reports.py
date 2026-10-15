@@ -568,3 +568,22 @@ def test_session_s_is_left_out_of_reports():
     with patch.object(session_report, "radio_facts", return_value={}):
         report = session_report.build_session_report(None, "aa", operation="command", trace=trace, exc=None)
     assert "session_s" not in report
+
+
+@pytest.mark.asyncio
+async def test_close_does_not_start_a_queued_command_while_a_response_is_awaited():
+    client = FakeBleakClient()
+    client.response_generator = lambda w: None  # never answers
+    conn = _conn(client, command_timeout=30.0)
+    first = asyncio.ensure_future(conn.send_dps([(0, 1)]))
+    await asyncio.sleep(0.05)  # worker is waiting for the response
+    queued = asyncio.ensure_future(conn.send_dps([(0, 2)]))
+    await asyncio.sleep(0)
+    writes_before = len(client.written_frames)
+
+    await asyncio.wait_for(conn.close(), timeout=1.0)
+
+    assert len(client.written_frames) == writes_before
+    results = await asyncio.gather(first, queued, return_exceptions=True)
+    assert all(isinstance(r, BaseException) for r in results)
+    assert not client.is_connected
