@@ -37,6 +37,8 @@ _DEVICE_FAULTS: dict[int, str] = {
     StatusCode.DEVICE_NOT_INITIAL: "The device is not initialised (not paired / set up yet).",
     StatusCode.DEVICE_UNAUTH: "The device refused the command as unauthorised.",
     StatusCode.BLE_RECEIVED_INVALID_DATA: "The device received malformed data over the link.",
+    StatusCode.DEVICE_SAME_DIRECTION: "The device is already moving in the requested direction.",
+    StatusCode.DEVICE_EXCEED_TIMER_NUM: "The device's timer capacity is full.",
 }
 
 _FALLBACK_CAUSE = "The command failed before the first stage was reached; see error."
@@ -46,7 +48,8 @@ def _device_cause(failure: Failure) -> str | None:
     """The device's own reading, or None where the shared sentence is the one."""
     exc = failure.exc
     if isinstance(exc, MiniBigDeviceError):
-        return _DEVICE_FAULTS.get(exc.status)
+        # The device answered: never fall through to the "no answer" wording.
+        return _DEVICE_FAULTS.get(exc.status, f"The device refused the command ({exc}).")
     where = failure.detail or failure.stage
     if where == stages.CONNECT:
         return (

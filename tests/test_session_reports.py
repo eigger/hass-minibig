@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from unittest.mock import patch
 
 import pytest
@@ -127,6 +128,8 @@ async def test_recovered_connect_is_not_blamed():
     assert conn.reports.failures == 0
     assert conn.reports.last["success"] is True
     assert "failed_stage" not in conn.reports.last
+    assert conn.reports.last["connect_recovered"] is True
+    assert "recovery_wait_s" in conn.reports.last
     await conn.disconnect()
 
 
@@ -163,12 +166,13 @@ async def test_report_builder_is_used_and_its_failure_falls_back():
 
 def test_build_session_report_words_device_errors_and_uses_the_radio_facts():
     trace = SessionTrace(stage_map=STAGE_MAP)
+    exc = MiniBigDeviceError(StatusCode.DEVICE_NOT_MATCHING, "Device matching error (IDV mismatch)")
     with pytest.raises(MiniBigDeviceError), trace.timed("response"):
-        raise MiniBigDeviceError(StatusCode.DEVICE_NOT_MATCHING, "Device matching error (IDV mismatch)")
+        raise exc
 
     with patch.object(session_report, "radio_facts", return_value={"via": "proxy-1", "rssi": -60, "paths": 2}):
         report = session_report.build_session_report(
-            None, "11:22:33:44:55:66", operation="command", trace=trace, exc=trace_exc(trace)
+            None, "11:22:33:44:55:66", operation="command", trace=trace, exc=exc
         )
 
     assert report["operation"] == "command"
@@ -177,10 +181,6 @@ def test_build_session_report_words_device_errors_and_uses_the_radio_facts():
     assert "IDV" in report["likely_cause"]
     assert report["via"] == "proxy-1"
     assert report["response_s"] >= 0
-
-
-def trace_exc(_trace: SessionTrace) -> BaseException:
-    return MiniBigDeviceError(StatusCode.DEVICE_NOT_MATCHING, "Device matching error (IDV mismatch)")
 
 
 def test_build_session_report_gives_connect_failures_a_device_specific_cause():
@@ -196,3 +196,85 @@ def test_build_session_report_gives_connect_failures_a_device_specific_cause():
 
     assert report["failed_stage"] == "connect"
     assert "one BLE link" in report["likely_cause"]
+
+
+def test_unmapped_device_status_is_not_reported_as_a_timeout():
+    trace = SessionTrace(stage_map=STAGE_MAP)
+    exc = MiniBigDeviceError(0x42, "Unknown device error")
+    trace.fail("response")
+
+    with patch.object(session_report, "radio_facts", return_value={}):
+        report = session_report.build_session_report(
+            None, "11:22:33:44:55:66", operation="command", trace=trace, exc=exc
+        )
+
+    assert "refused the command" in report["likely_cause"]
+    assert "in time" not in report["likely_cause"]
+
+
+@pytest.mark.asyncio
+async def test_same_direction_is_not_counted_as_a_failure():
+    client = FakeBleakClient()
+    client.response_generator = lambda w: bytes([Opcode.PUB_DPS, StatusCode.DEVICE_SAME_DIRECTION, 0])
+    conn = _conn(client)
+
+    with pytest.raises(MiniBigDeviceError):
+        await conn.send_dps([(0, 100)])
+
+    assert conn.reports.failures == 0
+    await conn.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_write_failure_is_attributed_to_the_write_stage():
+    client = FakeBleakClient()
+
+    async def broken_write(*_args, **_kwargs):
+        raise ConnectionError("link lost")
+
+    client.write_gatt_char = broken_write
+    conn = _conn(client)
+
+    with pytest.raises(MiniBigConnectionError):
+        await conn.send_dps([(0, 100)])
+
+    failure = conn.reports.last_failure
+    assert failure["failed_stage"] == "transfer"
+    assert failure["failed_detail"] == "write"
+    await conn.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_subscribe_failure_counts_even_for_a_poll():
+    client = FakeBleakClient()
+
+    async def broken_notify(*_args, **_kwargs):
+        raise ConnectionError("no notify")
+
+    client.start_notify = broken_notify
+    conn = _conn(client)
+
+    with pytest.raises(MiniBigConnectionError):
+        await conn.read_dps(operation=OPERATION_POLL)
+
+    assert conn.reports.failures == 1
+    assert conn.reports.last_failure["failed_stage"] == "session"
+    assert conn.reports.last_failure["failed_detail"] == "subscribe"
+
+
+@pytest.mark.asyncio
+async def test_superseded_and_disconnected_commands_are_not_recorded():
+    client = FakeBleakClient()
+    client.response_generator = lambda w: None
+    conn = _conn(client, command_timeout=5.0)
+
+    first = asyncio.ensure_future(conn.send_dps([(0, 1)]))
+    await asyncio.sleep(0)
+    second = asyncio.ensure_future(conn.send_dps([(0, 2)]))
+    third = asyncio.ensure_future(conn.send_dps([(0, 3)]))
+    await asyncio.sleep(0.05)
+    await conn.disconnect()
+    results = await asyncio.gather(first, second, third, return_exceptions=True)
+
+    assert any(isinstance(r, BaseException) for r in results)
+    assert conn.reports.failures == 0

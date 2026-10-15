@@ -18,7 +18,7 @@ from bleak_retry_connector import (
 )
 from blesession import SessionReports, SessionTrace, fallback_report, stages
 
-from .const import STATUS_MESSAGES, Opcode
+from .const import STATUS_MESSAGES, Opcode, StatusCode
 from .parser import MiniBigDeviceInfo
 from .writer import (
     Response,
@@ -38,6 +38,7 @@ RECOVERY_WAIT_S = 12.0
 
 # Device stage -> blesession primary stage. ``connect`` is already primary.
 STAGE_MAP = {
+    "recovery_wait": stages.CONNECT,
     "subscribe": stages.SESSION,
     "write": stages.TRANSFER,
     "response": stages.TRANSFER,
@@ -344,6 +345,9 @@ class MiniBigConnection:
             return
         if cmd.operation == OPERATION_POLL and (exc is None or trace.failed_primary == stages.CONNECT):
             return
+        if isinstance(exc, MiniBigDeviceError) and exc.status == StatusCode.DEVICE_SAME_DIRECTION:
+            # Already where it was asked to go: the command's purpose is met.
+            return
         try:
             if self.report_builder is None:
                 raise LookupError("no report builder")
@@ -432,13 +436,15 @@ class MiniBigConnection:
                 await close_stale_connections_by_address(address)
             except Exception:
                 pass
-            await asyncio.sleep(RECOVERY_WAIT_S)
+            with trace.timed("recovery_wait"):
+                await asyncio.sleep(RECOVERY_WAIT_S)
             try:
                 with trace.timed("connect"):
                     self._client = await _attempt_connect()
                 # The first attempt failed but the recovery worked: the
                 # command went on, so the report must not blame connect.
                 trace.forgive("connect")
+                trace.note(connect_recovered=True)
             except Exception as exc:
                 raise MiniBigConnectionError(
                     f"Failed to connect to {address} after stale-link recovery "
