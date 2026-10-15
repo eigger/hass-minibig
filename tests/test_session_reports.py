@@ -473,3 +473,98 @@ async def test_idle_disconnect_waits_for_the_lock_and_yields_to_newer_traffic():
 
     await asyncio.sleep(0.12)  # now genuinely idle
     assert not client.is_connected
+
+
+@pytest.mark.asyncio
+async def test_ble_session_closes_a_dropped_but_open_handle_and_reuses_a_live_one():
+    from unittest.mock import AsyncMock
+
+    first, second = FakeBleakClient(), FakeBleakClient()
+    for client in (first, second):
+        client.response_generator = _ack
+        client._is_connected = True
+    callbacks: list = []
+
+    async def establish(_cls, _device, _name, disconnected_callback=None, **_kw):
+        callbacks.append(disconnected_callback)
+        return [first, second][len(callbacks) - 1]
+
+    conn = _real_path_conn()
+    with patch("blesession.session.establish_connection", new=AsyncMock(side_effect=establish)):
+        await conn.send_dps([(0, 1)])
+        assert conn._client is first
+
+        # Notifications lapsed but the link is still up: ble_session reuses it.
+        conn._is_notifying = False
+        await conn.send_dps([(0, 2)])
+        assert len(callbacks) == 1
+        assert conn._client is first
+
+        # The stack reported a drop while the handle still claims to be open:
+        # it must be closed before a fresh link is opened.
+        callbacks[0](first)
+        await conn.send_dps([(0, 3)])
+        assert len(callbacks) == 2
+        assert first.is_connected is False
+        assert conn._client is second
+
+    await conn.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_disconnect_is_bounded_when_the_stack_hangs():
+    client = FakeBleakClient()
+    client.response_generator = _ack
+    conn = _conn(client)
+    await conn.send_dps([(0, 1)])
+
+    async def hang():
+        await asyncio.sleep(3600)
+
+    client.disconnect = hang
+    with patch("custom_components.minibig.minibig_ble.client.DISCONNECT_TIMEOUT_S", 0.05):
+        await asyncio.wait_for(conn.disconnect(), timeout=1.0)
+
+
+@pytest.mark.asyncio
+async def test_idle_disconnect_does_not_fail_a_command_queued_behind_it():
+    client = FakeBleakClient()
+    client.response_generator = _ack
+    conn = _conn(client, idle_disconnect_s=0.05)
+    await conn.send_dps([(0, 1)])
+
+    async with conn._session_lock:
+        await asyncio.sleep(0.12)  # idle timer fired and is waiting for the lock
+        command = asyncio.ensure_future(conn.send_dps([(0, 2)]))
+        await asyncio.sleep(0)
+
+    resp = await asyncio.wait_for(command, timeout=1.0)
+    assert resp.ok
+    assert conn.reports.failures == 0
+    await conn.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_close_stops_a_worker_stuck_in_recovery_and_refuses_new_commands():
+    client = FakeBleakClient(fail_connect=True)
+    conn = _conn(client)
+
+    with patch("custom_components.minibig.minibig_ble.client.RECOVERY_WAIT_S", 30):
+        command = asyncio.ensure_future(conn.send_dps([(0, 1)]))
+        await asyncio.sleep(0.05)  # worker is now in the recovery wait
+        await asyncio.wait_for(conn.close(), timeout=1.0)
+
+    with pytest.raises(asyncio.CancelledError):
+        await command
+    assert not client.is_connected
+    with pytest.raises(MiniBigConnectionError, match="closed"):
+        await conn.send_dps([(0, 2)])
+
+
+def test_session_s_is_left_out_of_reports():
+    trace = SessionTrace(stage_map=STAGE_MAP)
+    with trace.timed("session"):
+        pass
+    with patch.object(session_report, "radio_facts", return_value={}):
+        report = session_report.build_session_report(None, "aa", operation="command", trace=trace, exc=None)
+    assert "session_s" not in report

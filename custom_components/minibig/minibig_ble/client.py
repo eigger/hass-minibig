@@ -14,7 +14,7 @@ from bleak_retry_connector import (
     BleakOutOfConnectionSlotsError,
     close_stale_connections_by_address,
 )
-from blesession import SessionReports, SessionTrace, Unreachable, ble_session, fallback_report, stages
+from blesession import DISCONNECT_TIMEOUT_S, SessionReports, SessionTrace, Unreachable, ble_session, fallback_report, stages
 
 from .const import STATUS_MESSAGES, Opcode, StatusCode
 from .parser import MiniBigDeviceInfo
@@ -132,6 +132,9 @@ class MiniBigConnection:
 
         self._idle_timer_handle: asyncio.TimerHandle | None = None
         self._touch_generation = 0
+        self._session_guard_pending = False
+        self._closing = False
+        self._inflight_command: _QueuedCommand | None = None
         self._movement_timer_handle: asyncio.TimerHandle | None = None
         self._session_start_time: float | None = None
 
@@ -271,37 +274,46 @@ class MiniBigConnection:
                     self.max_session_s,
                     self.device_info.address,
                 )
-                self._schedule_disconnect()
+                if not self._session_guard_pending:
+                    self._session_guard_pending = True
+                    started = self._session_start_time
+                    self._schedule_disconnect(lambda: self._session_start_time == started, guard=True)
                 return
 
             if self._idle_timer_handle:
                 self._idle_timer_handle.cancel()
             self._touch_generation += 1
+            generation = self._touch_generation
             self._idle_timer_handle = loop.call_later(
                 self.idle_disconnect_s,
                 self._schedule_disconnect,
-                self._touch_generation,
+                lambda: generation == self._touch_generation,
             )
 
-    def _schedule_disconnect(self, idle_generation: int | None = None) -> None:
+    def _schedule_disconnect(self, still_wanted: Callable[[], bool], guard: bool = False) -> None:
         """Schedule disconnect in background task."""
         loop = self._get_loop()
-        task = loop.create_task(self._disconnect_when_idle(idle_generation))
+        task = loop.create_task(self._disconnect_when_idle(still_wanted, guard))
         self._background_tasks.add(task)
         task.add_done_callback(self._background_tasks.discard)
 
-    async def _disconnect_when_idle(self, idle_generation: int | None) -> None:
+    async def _disconnect_when_idle(self, still_wanted: Callable[[], bool], guard: bool) -> None:
         """Disconnect once no command is using the link.
 
         Waiting for the session lock keeps the disconnect from tearing the
-        link down under a connect or write that is in flight. If traffic
-        touched the link while this waited (``idle_generation`` is stale),
-        the link is not idle any more and the newer timer decides instead.
+        link down under a connect or write that is in flight. Once it has the
+        lock, ``still_wanted`` says whether the link is still the idle (or
+        over-long) one this was scheduled for, and a queued command means it
+        is not idle: that command must not be failed with "Disconnected".
         """
-        async with self._session_lock:
-            if idle_generation is not None and idle_generation != self._touch_generation:
-                return
-            await self.disconnect()
+        try:
+            async with self._session_lock:
+                if not still_wanted() or self._pending_command is not None:
+                    return
+                await self.disconnect()
+        finally:
+            if guard:
+                self._session_guard_pending = False
 
     def _on_notify(self, _characteristic: Any, data: bytearray | bytes) -> None:
         """Handle incoming GATT notify packet."""
@@ -482,6 +494,11 @@ class MiniBigConnection:
                 await close_stale_connections_by_address(address)
             except Exception:
                 pass
+            # Let the retry's own failure, not the first one, name the stage.
+            first_stage = trace.failed_stage
+            trace.forgive()
+            if first_stage is not None:
+                trace.note(first_failed_stage=first_stage)
             with trace.timed("recovery_wait"):
                 await asyncio.sleep(RECOVERY_WAIT_S)
             try:
@@ -543,12 +560,32 @@ class MiniBigConnection:
                 self._client = None
             try:
                 if client.is_connected:
-                    await client.disconnect()
+                    # Bounded: this can run holding the session lock, and a
+                    # proxy that hung the session can hang the close too.
+                    async with asyncio.timeout(DISCONNECT_TIMEOUT_S):
+                        await client.disconnect()
             except Exception as err:
                 _LOGGER.debug("Error disconnecting %s: %s", self.device_info.address, err)
 
         self._notify_connection_state()
         _LOGGER.debug("Disconnected from %s", self.device_info.address)
+
+    async def close(self) -> None:
+        """Stop for good: refuse new commands, stop the worker, drop the link.
+
+        Used on unload. Plain disconnect() leaves a worker that is in the
+        middle of connecting free to finish and leave a fresh link behind,
+        which would keep holding the device's single slot.
+        """
+        self._closing = True
+        worker = self._worker_task
+        if worker is not None and not worker.done():
+            worker.cancel()
+            await asyncio.gather(worker, return_exceptions=True)
+        if self._inflight_command is not None and not self._inflight_command.user_future.done():
+            self._inflight_command.user_future.cancel()
+        self._inflight_command = None
+        await self.disconnect()
 
     async def send_frame(
         self,
@@ -562,6 +599,8 @@ class MiniBigConnection:
         ``operation`` names the caller (poll / command / service) in the
         session report; it does not change how the frame is sent.
         """
+        if self._closing:
+            raise MiniBigConnectionError("Connection is closed")
         timeout_val = timeout if timeout is not None else self.command_timeout
         loop = self._get_loop()
         user_future: asyncio.Future[Response] = loop.create_future()
@@ -612,6 +651,7 @@ class MiniBigConnection:
                 if cmd.user_future.done():
                     continue
 
+                self._inflight_command = cmd
                 trace = SessionTrace(stage_map=STAGE_MAP)
                 try:
                     await self.connect(trace)
