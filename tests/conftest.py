@@ -23,6 +23,13 @@ class MockHomeAssistantError(Exception):
 
 ha_exceptions = MagicMock()
 ha_exceptions.HomeAssistantError = MockHomeAssistantError
+
+
+class MockServiceValidationError(MockHomeAssistantError):
+    """Mock ServiceValidationError."""
+
+
+ha_exceptions.ServiceValidationError = MockServiceValidationError
 sys.modules["homeassistant.exceptions"] = ha_exceptions
 
 # Mock Home Assistant core and submodules
@@ -125,3 +132,4 @@ sys.modules["homeassistant.helpers.device_registry"] = MagicMock()
 sys.modules["homeassistant.helpers.entity_platform"] = MagicMock()
 sys.modules["homeassistant.helpers.selector"] = MagicMock()
 sys.modules["homeassistant.helpers.config_validation"] = MagicMock()
+sys.modules["homeassistant.helpers.typing"] = MagicMock()

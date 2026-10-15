@@ -68,16 +68,23 @@ async def _async_for_each_device(
 ) -> None:
     """Run an action for every targeted device, aggregating failures."""
     errors: list[str] = []
+    validation_only = True
     for device_id in device_ids:
         try:
             entry = _get_loaded_entry(hass, device_id)
+        except ServiceValidationError as err:
+            errors.append(f"{device_id}: {err}")
+            continue
+        try:
             await action(device_id, entry)
         except Exception as err:  # noqa: BLE001 - report per-device, keep going
             _LOGGER.error("%s command failed for %s: %s", service, device_id, err)
             errors.append(f"{device_id}: {err}")
+            validation_only = False
 
     if errors:
-        raise HomeAssistantError(f"{service} failed for {len(errors)} device(s): {', '.join(errors)}")
+        message = f"{service} failed for {len(errors)} device(s): {', '.join(errors)}"
+        raise (ServiceValidationError if validation_only else HomeAssistantError)(message)
 
 
 async def async_setup_services(hass: HomeAssistant) -> None:
