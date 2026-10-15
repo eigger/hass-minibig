@@ -98,6 +98,15 @@
       },
       "last_status": {
         "name": "Last Response Status"
+      },
+      "last_failure": {
+        "name": "Last Failure"
+      },
+      "last_error": {
+        "name": "Last Error"
+      },
+      "error_count": {
+        "name": "Error Count"
       }
     },
     "binary_sensor": {
@@ -139,6 +148,9 @@
       },
       "unpair_emitter": {
         "name": "Unpair Remote"
+      },
+      "clear_errors": {
+        "name": "Clear Errors"
       }
     },
     "select": {

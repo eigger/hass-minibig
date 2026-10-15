@@ -67,6 +67,12 @@ class MockRestoreEntity(MockBase):
     pass
 
 class MockCoordinatorEntity(MockBase):
+    async def async_added_to_hass(self) -> None:
+        pass
+
+    async def async_will_remove_from_hass(self) -> None:
+        pass
+
     @property
     def available(self) -> bool:
         coord = getattr(self, "coordinator", None)
@@ -112,6 +118,8 @@ sys.modules["homeassistant.helpers.update_coordinator"].DataUpdateCoordinator = 
 sys.modules["homeassistant.config_entries"] = MagicMock()
 sys.modules["homeassistant.const"] = MagicMock()
 sys.modules["homeassistant.core"] = MagicMock()
+# @callback only marks a function as loop-safe; keep the function itself.
+sys.modules["homeassistant.core"].callback = lambda func: func
 sys.modules["homeassistant.helpers"] = MagicMock()
 sys.modules["homeassistant.helpers.device_registry"] = MagicMock()
 sys.modules["homeassistant.helpers.entity_platform"] = MagicMock()
