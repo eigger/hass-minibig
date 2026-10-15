@@ -196,7 +196,7 @@ class MiniBigSessionReportSensor(MiniBigBaseSensor):
     async def async_added_to_hass(self) -> None:
         """Refresh whenever a session report is filed."""
         await super().async_added_to_hass()
-        self._remove_report_listener = self._reports.add_listener(self._handle_report)
+        self._remove_report_listener = self.entry.runtime_data.connection.add_reports_listener(self._handle_report)
 
     async def async_will_remove_from_hass(self) -> None:
         """Stop listening for session reports."""

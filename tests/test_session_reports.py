@@ -334,7 +334,7 @@ async def test_diagnostic_sensors_follow_the_reports_and_clear_button_resets_the
     assert count.extra_state_attributes is None
 
     notified: list[int] = []
-    conn.reports.add_listener(lambda: notified.append(1))
+    conn.add_reports_listener(lambda: notified.append(1))
     await MiniBigClearErrorsButton(entry, coordinator).async_press()
 
     assert notified == [1]
@@ -354,3 +354,27 @@ def test_last_error_state_is_capped_to_255_characters():
     sensor = MiniBigLastErrorSensor(_sensor_entry(conn), MagicMock())
 
     assert len(sensor.native_value) == 255
+
+
+@pytest.mark.asyncio
+async def test_sensors_write_state_on_report_and_clear_and_stop_after_removal():
+    from unittest.mock import MagicMock
+
+    from custom_components.minibig.sensor import MiniBigErrorCountSensor
+
+    conn = _conn(FakeBleakClient())
+    sensor = MiniBigErrorCountSensor(_sensor_entry(conn), MagicMock())
+    sensor.async_write_ha_state = MagicMock()
+
+    await sensor.async_added_to_hass()
+    conn.reports.record({"operation": "command", "success": False, "error": "boom"})
+    assert sensor.async_write_ha_state.call_count == 1
+
+    conn.clear_reports()
+    assert sensor.async_write_ha_state.call_count == 2
+    assert sensor.native_value == 0
+
+    await sensor.async_will_remove_from_hass()
+    conn.reports.record({"operation": "command", "success": False, "error": "boom"})
+    conn.clear_reports()
+    assert sensor.async_write_ha_state.call_count == 2
