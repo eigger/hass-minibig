@@ -5,6 +5,9 @@
 # turn a green branch red without any code change. Pin the selection here
 # instead: E/F are the pycodestyle+pyflakes rules this codebase was already
 # clean against (real errors: undefined names, unused imports, syntax issues).
+line-length = 120
+target-version = "py313"
+
 [lint]
 select = ["E", "F"]
 
