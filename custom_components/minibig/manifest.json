@@ -25,6 +25,8 @@
   "documentation": "https://github.com/eigger/hass-minibig",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/eigger/hass-minibig/issues",
-  "requirements": [],
+  "requirements": [
+    "blesession>=0.9.0"
+  ],
   "version": "0.1.9"
 }

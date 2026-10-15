@@ -10,36 +10,15 @@ from dataclasses import dataclass
 from typing import Any
 
 from bleak import BleakClient
-from bleak.exc import BleakError
 
-try:
-    from bleak_retry_connector import (
-        BleakOutOfConnectionSlotsError,
-        close_stale_connections_by_address,
-        establish_connection,
-    )
-except ImportError:
-    class BleakOutOfConnectionSlotsError(BleakError):  # type: ignore[no-redef]
-        """Fallback BleakOutOfConnectionSlotsError."""
+from bleak_retry_connector import (
+    BleakOutOfConnectionSlotsError,
+    close_stale_connections_by_address,
+    establish_connection,
+)
+from blesession import SessionReports, SessionTrace, fallback_report, stages
 
-    async def close_stale_connections_by_address(address: str) -> None:
-        """Fallback close stale connections."""
-        pass
-
-    async def establish_connection(
-        client_class: Any,
-        device: Any,
-        name: str,
-        disconnected_callback: Any = None,
-        max_attempts: int = 3,
-        **kwargs: Any,
-    ) -> Any:
-        """Fallback establish connection."""
-        client = client_class(device, disconnected_callback=disconnected_callback)
-        await client.connect()
-        return client
-
-from .const import STATUS_MESSAGES, Opcode
+from .const import STATUS_MESSAGES, Opcode, StatusCode
 from .parser import MiniBigDeviceInfo
 from .writer import (
     Response,
@@ -56,6 +35,20 @@ _LOGGER = logging.getLogger(__name__)
 # The device only accepts one BLE link. After clearing a stale one, it needs a
 # moment before it starts advertising as connectable again.
 RECOVERY_WAIT_S = 12.0
+
+# Device stage -> blesession primary stage. ``connect`` is already primary.
+STAGE_MAP = {
+    "recovery_wait": stages.CONNECT,
+    "subscribe": stages.SESSION,
+    "write": stages.TRANSFER,
+    "response": stages.TRANSFER,
+}
+
+OPERATION_POLL = "poll"
+OPERATION_COMMAND = "command"
+OPERATION_SERVICE = "service"
+
+SessionReportBuilder = Callable[[str, SessionTrace, BaseException | None], dict[str, Any]]
 
 
 class MiniBigError(Exception):
@@ -92,6 +85,7 @@ class _QueuedCommand:
     expected_method: int
     timeout: float
     user_future: asyncio.Future[Response]
+    operation: str = OPERATION_COMMAND
 
 
 class MiniBigConnection:
@@ -109,6 +103,7 @@ class MiniBigConnection:
         retry_count: int = 3,
         loop: asyncio.AbstractEventLoop | None = None,
         client_override: BleakClient | None = None,
+        report_builder: SessionReportBuilder | None = None,
     ) -> None:
         """Initialize MiniBig BLE connection manager."""
         self.device_info = device_info
@@ -120,6 +115,12 @@ class MiniBigConnection:
         self.max_session_s = max_session_s
         self.retry_count = retry_count
         self._loop = loop
+
+        # Per-command session breakdown for the diagnostic sensors. The
+        # builder is injected (it needs hass for the radio facts); without
+        # one a minimal report is filed so a failure is still counted.
+        self.reports = SessionReports()
+        self.report_builder = report_builder
 
         self._client_override = client_override
         self._client: BleakClient | Any | None = client_override
@@ -327,7 +328,36 @@ class MiniBigConnection:
             except Exception as err:
                 _LOGGER.error("Error in report callback: %s", err)
 
-    async def connect(self) -> None:
+    def _file_session(
+        self,
+        cmd: _QueuedCommand,
+        trace: SessionTrace,
+        exc: BaseException | None,
+    ) -> None:
+        """File one finished command's report, unless it does not count.
+
+        A cancelled command is not an outcome. A status poll that dies at
+        connect is the device being off or out of range between polls:
+        counting it would climb on every interval and push the last real
+        failure off the sensor, and a poll that succeeds is not news.
+        """
+        if isinstance(exc, asyncio.CancelledError):
+            return
+        if cmd.operation == OPERATION_POLL and (exc is None or trace.failed_primary == stages.CONNECT):
+            return
+        if isinstance(exc, MiniBigDeviceError) and exc.status == StatusCode.DEVICE_SAME_DIRECTION:
+            # Already where it was asked to go: the command's purpose is met.
+            return
+        try:
+            if self.report_builder is None:
+                raise LookupError("no report builder")
+            report = self.report_builder(cmd.operation, trace, exc)
+        except Exception as err:  # noqa: BLE001 - diagnostics must not mask the outcome
+            _LOGGER.debug("Building the session report failed: %s", err)
+            report = fallback_report(cmd.operation, trace=trace, exc=exc)
+        self.reports.record(report)
+
+    async def connect(self, trace: SessionTrace | None = None) -> None:
         """Establish BLE GATT connection and start notifications."""
         if self.is_connected and self._is_notifying:
             return
@@ -375,9 +405,11 @@ class MiniBigConnection:
                 max_attempts=self.retry_count,
             )
 
+        trace = trace if trace is not None else SessionTrace(stage_map=STAGE_MAP)
         try:
             if self._client is None or not self._client.is_connected:
-                self._client = await _attempt_connect()
+                with trace.timed("connect"):
+                    self._client = await _attempt_connect()
         except Exception as first_exc:
             # The device accepts only one BLE link. A link that died without the
             # peer noticing leaves it advertising as non-connectable, which
@@ -404,9 +436,15 @@ class MiniBigConnection:
                 await close_stale_connections_by_address(address)
             except Exception:
                 pass
-            await asyncio.sleep(RECOVERY_WAIT_S)
+            with trace.timed("recovery_wait"):
+                await asyncio.sleep(RECOVERY_WAIT_S)
             try:
-                self._client = await _attempt_connect()
+                with trace.timed("connect"):
+                    self._client = await _attempt_connect()
+                # The first attempt failed but the recovery worked: the
+                # command went on, so the report must not blame connect.
+                trace.forgive("connect")
+                trace.note(connect_recovered=True)
             except Exception as exc:
                 raise MiniBigConnectionError(
                     f"Failed to connect to {address} after stale-link recovery "
@@ -415,7 +453,8 @@ class MiniBigConnection:
 
         # Subscribe to notify characteristic
         try:
-            await self._client.start_notify(self.device_info.notify_uuid, self._on_notify)
+            with trace.timed("subscribe"):
+                await self._client.start_notify(self.device_info.notify_uuid, self._on_notify)
             self._is_notifying = True
         except Exception as exc:
             await self.disconnect()
@@ -471,8 +510,13 @@ class MiniBigConnection:
         frame: bytes,
         expected_method: int,
         timeout: float | None = None,
+        operation: str = OPERATION_COMMAND,
     ) -> Response:
-        """Queue and execute a command frame with strict single-slot coalescing."""
+        """Queue and execute a command frame with strict single-slot coalescing.
+
+        ``operation`` names the caller (poll / command / service) in the
+        session report; it does not change how the frame is sent.
+        """
         timeout_val = timeout if timeout is not None else self.command_timeout
         loop = self._get_loop()
         user_future: asyncio.Future[Response] = loop.create_future()
@@ -496,6 +540,7 @@ class MiniBigConnection:
             expected_method=expected_method,
             timeout=timeout_val,
             user_future=user_future,
+            operation=operation,
         )
 
         # Trigger worker task if not already running
@@ -522,9 +567,11 @@ class MiniBigConnection:
                 if cmd.user_future.done():
                     continue
 
+                trace = SessionTrace(stage_map=STAGE_MAP)
                 try:
-                    await self.connect()
+                    await self.connect(trace)
                 except Exception as exc:
+                    self._file_session(cmd, trace, exc)
                     if not cmd.user_future.done():
                         cmd.user_future.set_exception(exc)
                     continue
@@ -535,44 +582,48 @@ class MiniBigConnection:
 
                 # Write frame to characteristic
                 try:
-                    async with self._write_lock:
-                        _LOGGER.debug("GATT Write to %s: %s", self.device_info.address, cmd.frame.hex())
-                        chunk_size = 20
-                        for i in range(0, len(cmd.frame), chunk_size):
-                            chunk = cmd.frame[i : i + chunk_size]
-                            await self._client.write_gatt_char(
-                                self.device_info.write_uuid,
-                                chunk,
-                                response=False,
-                            )
-                        self._touch()
+                    with trace.timed("write"):
+                        async with self._write_lock:
+                            _LOGGER.debug("GATT Write to %s: %s", self.device_info.address, cmd.frame.hex())
+                            chunk_size = 20
+                            for i in range(0, len(cmd.frame), chunk_size):
+                                chunk = cmd.frame[i : i + chunk_size]
+                                await self._client.write_gatt_char(
+                                    self.device_info.write_uuid,
+                                    chunk,
+                                    response=False,
+                                )
+                            self._touch()
                 except Exception as exc:
                     self._current_waiter = None
                     self._current_method = None
+                    error = MiniBigConnectionError(
+                        f"Failed writing command to {self.device_info.address}: {exc}"
+                    )
+                    error.__cause__ = exc
+                    self._file_session(cmd, trace, error)
                     if not cmd.user_future.done():
-                        cmd.user_future.set_exception(
-                            MiniBigConnectionError(
-                                f"Failed writing command to {self.device_info.address}: {exc}"
-                            )
-                        )
+                        cmd.user_future.set_exception(error)
                     continue
 
                 # Wait for matching response
                 try:
-                    resp = await asyncio.wait_for(internal_future, timeout=cmd.timeout)
+                    with trace.timed("response"):
+                        resp = await asyncio.wait_for(internal_future, timeout=cmd.timeout)
                 except asyncio.TimeoutError:
+                    error = MiniBigTimeoutError(
+                        f"Timeout ({cmd.timeout}s) waiting for response (opcode {cmd.expected_method}) from {self.device_info.address}"
+                    )
+                    self._file_session(cmd, trace, error)
                     if not cmd.user_future.done():
-                        cmd.user_future.set_exception(
-                            MiniBigTimeoutError(
-                                f"Timeout ({cmd.timeout}s) waiting for response (opcode {cmd.expected_method}) from {self.device_info.address}"
-                            )
-                        )
+                        cmd.user_future.set_exception(error)
                     continue
                 except asyncio.CancelledError:
                     if not cmd.user_future.done():
                         cmd.user_future.cancel()
                     continue
                 except Exception as exc:
+                    self._file_session(cmd, trace, exc)
                     if not cmd.user_future.done():
                         cmd.user_future.set_exception(exc)
                     continue
@@ -583,23 +634,37 @@ class MiniBigConnection:
                 # Check status code and fulfill user future
                 if not resp.ok:
                     msg = STATUS_MESSAGES.get(resp.status, "Unknown device error")
+                    error = MiniBigDeviceError(resp.status, msg)
+                    # The exchange completed; the device refused it.
+                    trace.fail("response")
+                    self._file_session(cmd, trace, error)
                     if not cmd.user_future.done():
-                        cmd.user_future.set_exception(MiniBigDeviceError(resp.status, msg))
+                        cmd.user_future.set_exception(error)
                 else:
+                    self._file_session(cmd, trace, None)
                     if not cmd.user_future.done():
                         cmd.user_future.set_result(resp)
 
-    async def send_dps(self, dps: list[tuple[int, int]], timeout: float | None = None) -> Response:
+    async def send_dps(
+        self,
+        dps: list[tuple[int, int]],
+        timeout: float | None = None,
+        operation: str = OPERATION_COMMAND,
+    ) -> Response:
         """Send PUB_DPS command to set DP values."""
         frame = build_pub_dps(self.device_info, dps)
         expected_method = frame[0]
-        return await self.send_frame(frame, expected_method, timeout=timeout)
+        return await self.send_frame(frame, expected_method, timeout=timeout, operation=operation)
 
-    async def read_dps(self, timeout: float | None = None) -> Response:
+    async def read_dps(
+        self,
+        timeout: float | None = None,
+        operation: str = OPERATION_COMMAND,
+    ) -> Response:
         """Send READ_DPS command to get current DP values."""
         frame = build_read_dps(self.device_info)
         expected_method = frame[0]
-        return await self.send_frame(frame, expected_method, timeout=timeout)
+        return await self.send_frame(frame, expected_method, timeout=timeout, operation=operation)
 
     async def restart(self, timeout: float | None = None) -> Response:
         """Send device restart command."""
@@ -611,7 +676,13 @@ class MiniBigConnection:
         frame = build_manu_reset(self.device_info)
         return await self.send_frame(frame, frame[0], timeout=timeout)
 
-    async def send_raw(self, method: int, payload: bytes = b"", timeout: float | None = None) -> Response:
+    async def send_raw(
+        self,
+        method: int,
+        payload: bytes = b"",
+        timeout: float | None = None,
+        operation: str = OPERATION_SERVICE,
+    ) -> Response:
         """Send an arbitrary raw command frame for diagnostics or testing."""
         frame = build_frame(method, self.device_info.idv, payload)
-        return await self.send_frame(frame, method, timeout=timeout)
+        return await self.send_frame(frame, method, timeout=timeout, operation=operation)

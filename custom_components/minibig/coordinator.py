@@ -23,7 +23,7 @@ from .const import (
     CONF_POWER_DP_ID,
     DEFAULT_POLL_INTERVAL_MIN,
 )
-from .minibig_ble import DeviceProfile, MiniBigConnection, MiniBigDeviceInfo
+from .minibig_ble import OPERATION_POLL, DeviceProfile, MiniBigConnection, MiniBigDeviceInfo
 
 if TYPE_CHECKING:
     from .types import MiniBigConfigEntry
@@ -181,13 +181,13 @@ class MiniBigActiveCoordinator(DataUpdateCoordinator[dict[int, int]]):
             if strategy == "dp3":
                 # Window opener: send dp3 (stop) which returns position without physical motion
                 stop_dp = self.profile.dp_stop if self.profile.dp_stop is not None else 3
-                resp = await self.connection.send_dps([(stop_dp, 0)])
+                resp = await self.connection.send_dps([(stop_dp, 0)], operation=OPERATION_POLL)
             elif strategy == "read_setting":
-                resp = await self.connection.read_dps()
+                resp = await self.connection.read_dps(operation=OPERATION_POLL)
             elif strategy == "none":
                 return self.data or {}
             else:
-                resp = await self.connection.read_dps()
+                resp = await self.connection.read_dps(operation=OPERATION_POLL)
 
             if resp and resp.ok and resp.dps:
                 self._log_unknown_dps(resp.dps)
