@@ -24,7 +24,7 @@ SERVICE_PUBLISH_DPS = "publish_dps"
 SERVICE_SEND_RAW_SCHEMA = vol.Schema(
     {
         vol.Required("device_id"): vol.All(cv.ensure_list, [cv.string]),
-        vol.Required("method"): cv.positive_int,
+        vol.Required("method"): vol.All(cv.positive_int, vol.Range(max=255)),
         vol.Optional("payload", default=""): cv.string,
     }
 )
@@ -67,24 +67,28 @@ async def _async_for_each_device(
     action: Callable[[str, MiniBigConfigEntry], Awaitable[None]],
 ) -> None:
     """Run an action for every targeted device, aggregating failures."""
-    errors: list[str] = []
-    validation_only = True
+    # Validate every target first so a bad device ID never leaves the call
+    # half-executed.
+    entries: list[tuple[str, MiniBigConfigEntry]] = []
+    invalid: list[str] = []
     for device_id in device_ids:
         try:
-            entry = _get_loaded_entry(hass, device_id)
+            entries.append((device_id, _get_loaded_entry(hass, device_id)))
         except ServiceValidationError as err:
-            errors.append(f"{device_id}: {err}")
-            continue
+            invalid.append(f"{device_id}: {err}")
+    if invalid:
+        raise ServiceValidationError(f"{service} rejected: {', '.join(invalid)}")
+
+    errors: list[str] = []
+    for device_id, entry in entries:
         try:
             await action(device_id, entry)
         except Exception as err:  # noqa: BLE001 - report per-device, keep going
             _LOGGER.error("%s command failed for %s: %s", service, device_id, err)
             errors.append(f"{device_id}: {err}")
-            validation_only = False
 
     if errors:
-        message = f"{service} failed for {len(errors)} device(s): {', '.join(errors)}"
-        raise (ServiceValidationError if validation_only else HomeAssistantError)(message)
+        raise HomeAssistantError(f"{service} failed for {len(errors)} device(s): {', '.join(errors)}")
 
 
 async def async_setup_services(hass: HomeAssistant) -> None:
