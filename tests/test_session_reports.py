@@ -121,8 +121,13 @@ async def test_poll_counts_only_when_it_fails_after_connecting():
 async def test_recovered_connect_is_not_blamed():
     client = FakeBleakClient(slot_error_once=True)
     client.response_generator = _ack
+
+    def builder(operation, trace, exc):
+        with patch.object(session_report, "radio_facts", return_value={}):
+            return session_report.build_session_report(None, "aa", operation=operation, trace=trace, exc=exc)
+
     with patch("custom_components.minibig.minibig_ble.client.RECOVERY_WAIT_S", 0):
-        conn = _conn(client)
+        conn = _conn(client, report_builder=builder)
         await conn.send_dps([(0, 100)])
 
     assert conn.reports.failures == 0
