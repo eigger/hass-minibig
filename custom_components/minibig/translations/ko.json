@@ -181,6 +181,10 @@
       "name": "원시 명령 전송",
       "description": "MiniBig 기기에 BLE GATT를 통해 원시 opcode 및 16진수 페이로드를 직접 전송합니다.",
       "fields": {
+        "device_id": {
+          "name": "장치",
+          "description": "대상 MiniBig 장치."
+        },
         "method": {
           "name": "메소드 (Opcode)",
           "description": "숫자 opcode (예: PUB_DPS=42, READ_DPS=43, RESTART=17)."
@@ -195,6 +199,10 @@
       "name": "DPS 설정",
       "description": "MiniBig 기기의 DP 값을 설정합니다.",
       "fields": {
+        "device_id": {
+          "name": "장치",
+          "description": "대상 MiniBig 장치."
+        },
         "dps": {
           "name": "DP 목록",
           "description": "dp_id와 value를 포함하는 객체 배열."

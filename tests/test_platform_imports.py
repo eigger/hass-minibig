@@ -11,6 +11,7 @@ def test_import_all_platforms():
         "custom_components.minibig",
         "custom_components.minibig.const",
         "custom_components.minibig.types",
+        "custom_components.minibig.services",
         "custom_components.minibig.coordinator",
         "custom_components.minibig.config_flow",
         "custom_components.minibig.button",

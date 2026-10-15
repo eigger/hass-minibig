@@ -181,6 +181,10 @@
       "name": "Send Raw Command",
       "description": "Sends a raw opcode and optional hex payload directly to the MiniBig device over BLE GATT.",
       "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The MiniBig device(s) to target."
+        },
         "method": {
           "name": "Method (Opcode)",
           "description": "Numeric opcode (e.g. 42 for PUB_DPS, 43 for READ_DPS, 17 for RESTART)."
@@ -195,6 +199,10 @@
       "name": "Publish DPS",
       "description": "Sets one or more DP values on the MiniBig device.",
       "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The MiniBig device(s) to target."
+        },
         "dps": {
           "name": "DP List",
           "description": "List of DP objects containing dp_id and value."
