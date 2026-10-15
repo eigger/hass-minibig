@@ -30,6 +30,7 @@ Home Assistant custom integration to directly control **MiniBig** Bluetooth Low 
 - **Active Streaming Movement Tracking**: Uses `REPORT_DPS` (opcode 24) live push packets to track moving state smoothly without excessive polling.
 - **Command Coalescing**: Consecutive commands sent during connection setup or in-flight execution automatically overwrite older pending commands so only the latest intended state is dispatched to the motor.
 - **Slot Exhaustion Recovery**: Automatically handles stale connections and single-slot limitations with retry and recovery logic.
+- **Error Diagnostics**: Diagnostic sensors **Last Failure** (timestamp; its attributes show the failed stage, a likely cause, the radio/proxy used and per-stage timings), **Last Error** and **Error Count**, plus a **Clear Errors** button. Status polls that fail only because the device is out of range are not counted.
 
 ---
 
@@ -42,6 +43,11 @@ Home Assistant custom integration to directly control **MiniBig** Bluetooth Low 
 3. Add repository URL: `https://github.com/eigger/hass-minibig` with Category: **Integration**.
 4. Search for **MiniBig** in HACS and click **Download**.
 5. Restart Home Assistant.
+
+### Requirements
+
+- Home Assistant **2025.8.0** or newer (Python 3.13).
+- A Bluetooth adapter or ESPHome Bluetooth proxy in range of the device. The `blesession` library is installed automatically by Home Assistant.
 
 ### Manual Installation
 
