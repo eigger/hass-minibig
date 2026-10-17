@@ -8,18 +8,18 @@ MiniBig 첫 채택의 실제 점검 기록입니다. 미완료 항목은 TODO로
 |---|---|
 | 통합 리포 / 실제 기본 브랜치 | `eigger/hass-minibig` / `main` |
 | domain / 구현 경로 | `minibig` / `custom_components/minibig/` |
-| 검토 대상 통합 커밋 / 채택 PR | 시작 `c45775cf2179ae052fa0b1a47543ada91807f50e`에서 구현 최종 diff 로컬 검증. 게시 SHA·원격CI는 push 후 기록. 사용자 직접 push 지시, PR 없음 |
+| 검토 대상 통합 커밋 / 채택 PR | 시작 `c45775cf2179ae052fa0b1a47543ada91807f50e` → 구현 main [`e70ee806dcbb8ebc561304253a8bbd373f9826b0`](https://github.com/eigger/hass-minibig/commit/e70ee806dcbb8ebc561304253a8bbd373f9826b0). 사용자 직접 push 지시, PR 없음. 이 마감 문서는 별도 후속 커밋으로 게시/검증 |
 | 검토한 표준 전체 커밋 SHA | `b1c80cf2c4bf8b4bc4e3556409ad948b7f850ea0` |
 | 검토일 / 조율 담당 | 2026-10-17 / root |
 | 구현 서브 에이전트 / 독립 리뷰·검증 서브 에이전트 | minibig_implementation·minibig_docs / minibig_review |
-| 중앙 현황표 반영일 / 기록 | 2026-10-17 시작 등록 [dbe3b96](https://github.com/eigger/hass-repo-standards/commit/dbe3b96a3b248fcf632e030a02a3c4f90a0e84a1) · [중앙 CI](https://github.com/eigger/hass-repo-standards/actions/runs/39041666477) 성공. 단계/종료는 검증 후 갱신 |
+| 중앙 현황표 반영일 / 기록 | 2026-10-17 시작 등록 [dbe3b96](https://github.com/eigger/hass-repo-standards/commit/dbe3b96a3b248fcf632e030a02a3c4f90a0e84a1) · [중앙 CI](https://github.com/eigger/hass-repo-standards/actions/runs/39041666477) 성공. 단계6e11e33 및 [구현·검증 종료 보고](https://github.com/eigger/hass-repo-standards/commit/b7b7d4cdf7df9b50bfd6405d3207873c1bb3f9e0) main 반영 |
 | 변경 전 지원 최소 HA / 근거 파일(hacs.json·manifest·README) | 2025.8.0 — hacs.json.homeassistant·기존 양 README 일치. manifest는 별도 최소 선언 없음 |
 | 유지·변경할 지원 최소 / 변경 시 실제 비호환 근거·명시적 승인 | 2025.8.0 유지; 통합0.3.0·blesession>=0.9.0 보존 |
 | current 테스트 HA / 호환 Python·플러그인 | HA2026.10.2 / Python3.14.5 / 플러그인0.13.373; 로컬 실제 설치 확인 |
 | 최소 테스트 HA / 호환 Python·플러그인 | HA2025.8.0 / Python3.13.14 / 플러그인0.13.269; 로컬 실제 설치 확인 |
 | profile / 테스트 경로 | integration / ha · tests/components/minibig/ |
 | 이전 검토 기록 | 최초 채택 |
-| 채택 판정 | 이관 진행 중 — 최종 로컬 구현·독립 검증 통과, 기본 브랜치 게시·해당 SHA 원격CI·중앙 종료 보고 대기 |
+| 채택 판정 | 구현 채택 필수 PASS/N/A, 예외/TODO 없음. 구현 main·정확한 SHA 원격CI·중앙 구현/검증 종료 보고 확인. 이 2문서 마감 커밋의 push/원격CI와 중앙 최종 완료 갱신은 별도 후속 확인 |
 
 상태: `TODO` = 미확인·미충족, `PASS` = 근거로 확인, `EXCEPTION` = 적용 대상의 기록된 예외, `N/A` = 적용 조건에 해당 없음. 모든 항목은 미확인으로 시작합니다. `TODO`를 해당 없음으로 처리하지 않습니다. 묶은 규칙의 결과가 다르면 행을 나눕니다. 권장 항목은 별도로 표시했으며 미채택 이유를 기록합니다.
 
@@ -29,10 +29,10 @@ MiniBig 첫 채택의 실제 점검 기록입니다. 미완료 항목은 TODO로
 |---|---|---|---|
 | GOV-01, GOV-02 | `STANDARDS.md`에 표준 SHA·profile·실제 기본 브랜치·예외 기록, workflow/action은 검토 SHA로 고정 | PASS | [STANDARDS.md](STANDARDS.md) 기준 b1c80cf 전체 SHA·profile·main 기록. Tests/Validate/update_dependencies의 공통 호출 모두 해당 전체 SHA 고정. |
 | GOV-03 | 새 표준 채택 변경의 영향·이관 방법과 명시적 채택 PR 확인. 규칙 자체를 변경하면 공통 CHANGELOG 기록 | PASS | 첫 명시적 채택이며 사용자 직접 push 지시로 검토한 diff를 반영. 기존 채택 기준 변경/중앙 규칙 변경 없음으로 후속 채택 PR·공통 CHANGELOG 변경 조건은 해당 없음. 영향은 STANDARDS·개발 문서에 기록. |
-| GOV-04 | 중앙 표에 작업 시작·단계 변경·종료 상태, 담당·적용 내용·검증/리뷰 근거·남은 작업 갱신, 타 리포 기록 보존 | TODO | 시작 dbe3b96·단계 6e11e33 중앙 main 반영 및 각 CI 성공. 종료 보고·최종 기본 브랜치/원격 CI 근거 갱신 대기. 타 리포 행 보존. |
+| GOV-04 | 중앙 표에 작업 시작·단계 변경·종료 상태, 담당·적용 내용·검증/리뷰 근거·남은 작업 갱신, 타 리포 기록 보존 | PASS | 시작 dbe3b96·단계6e11e33 및 [구현·검증 종료 보고 D](https://github.com/eigger/hass-repo-standards/commit/b7b7d4cdf7df9b50bfd6405d3207873c1bb3f9e0) 중앙 main 반영. 자기 행만 변경·타 기록 보존. D는 구현과 검증 종료의 실제 기록이며, 이 마감 문서 커밋 CI 확인 후 중앙 상태 문자열 완료를 갱신한다. |
 | GOV-05 | 구현과 독립 리뷰·검증을 별도 서브 에이전트에게 위임, 지적 수정·재검증 및 결과 취합 | PASS | 구현 minibig_implementation/minibig_docs, 독립 minibig_review. 독립 양 HA 최종 106passed skip0·pip check 통과. 초기 상태·restore·부분 플랫폼 rollback·구독 취소·로그/문서 지적 수정 후 재검증. |
 | HA-01, HA-13 | `custom_components/<domain>/`와 domain 일치, 필요한 모듈·공개 API·생명주기는 Core 대응 구조 | PASS | custom_components/minibig/와 실제 HA ConfigEntry/플랫폼·coordinator·runtime_data·async lifecycle 구조. 실제 manager 테스트 test_init/test_platforms 통과. |
-| HA-02 | manifest 필드·정렬·동작 선언 확인, 공식 품질 등급 자가 표기 없음 | PASS | manifest domain minibig/name/config_flow/iot_class/local_polling·version0.3.0 보존, 실제 사용하는 HA bluetooth dependency로 정정. 공식 quality scale 선언 없음. 원격 Hassfest는 별도 대기. |
+| HA-02 | manifest 필드·정렬·동작 선언 확인, 공식 품질 등급 자가 표기 없음 | PASS | manifest domain minibig/name/config_flow/iot_class/local_polling·version0.3.0 보존, 실제 사용하는 HA bluetooth dependency로 정정. 공식 quality scale 선언 없음. [게시 SHA Validate](https://github.com/eigger/hass-minibig/actions/runs/39042575896)의 Hassfest 통과. |
 | HA-03 (권장) | 공통 상수·설정·갱신·플랫폼 역할 및 프로토콜 경계에 맞게 모듈 구성 | PASS | const/types/config_flow/coordinator/services/session_report와 minibig_ble parser/writer/devices/client 경계 유지. |
 | HA-04, HA-08 | UI 설정·중복·안정적 식별 및 기능별 options/reauth/reconfigure, entity 의미·registry 영향 확인 | PASS | test_config_flow의 Bluetooth·사용자 추가/중복/HubMini거부/미발견/옵션 reload, test_platforms의 cover·switch·number 액션과 registry/state 확인. reauth/reconfigure는 기존 인증/재구성 기능 없음. |
 | HA-01, HA-04, HA-08, REL-01, REL-03 | domain·unique ID·entry schema·상태/통계 계약 변경 시 migration 테스트와 사용자 조치 안내 | PASS | domain·unique ID·entry version/data계약 유지. test_init의 저장ID복원/광고identity자가복구/기존 stale entity정리·현재 ID유지 및 test_config_flow 옵션reload 확인. 새 entry schema migration 없음; 기존 stale정리 회귀는 실제 registry로 검증. |
@@ -60,22 +60,24 @@ MiniBig 첫 채택의 실제 점검 기록입니다. 미완료 항목은 TODO로
 
 | 검증 축 / 상태 | 통합 커밋 | Python / HA / 플러그인 실제 버전 | 대상 패키지 실제 버전·extras·marker | 명령·테스트 결과·pip check / CI run·job | skip·제외·미검증 범위 |
 |---|---|---|---|---|---|
-| 구현 current HA × current/minimum BLE / PASS | 최종 로컬 diff (게시SHA 대기) | Python3.14.5 / HA2026.10.2 / plugin0.13.373 | blesession0.9.0 양mode, extras/marker없음; pycares5.2.0 | 별도2venv sharedinstaller→pytest tests/components/minibig/ -q→pip check 각106passed skip0 | 실물/UI미검증 |
-| 구현 minimum HA × current/minimum BLE / PASS | 같은 최종 로컬 diff | Python3.13.14 / HA2025.8.0 / plugin0.13.269 | blesession0.9.0 양mode, pycares4.11.0 | 별도2venv 동일명령 각106passed skip0·pip check | 실물/UI미검증 |
-| 독립 current HA / PASS | 같은 최종 로컬 diff | Python3.14.5 / HA2026.10.2 / plugin0.13.373 | blesession0.9.0 / pycares5.2.0 | 독립env manifest/HA재귀설치→pytest tests/components/minibig/ -v 106passed skip0·pip check | 실물/UI미검증 |
-| 독립 정확한 최소 HA / PASS | 같은 최종 로컬 diff | Python3.13.14 / HA2025.8.0 / plugin0.13.269 | blesession0.9.0 / pycares4.11.0 | 독립env pytest tests/components/minibig/ -v 106passed skip0·pip check | macOS asyncinotify 경고1(플랫폼차이); Linux CI대기 |
-| 게시 SHA 원격 CI / TODO | 미게시 | 실제runner버전 확인대기 | 네 matrix 설치값확인대기 | Tests·HACS/Hassfest 대기 | 실제원격결과미확인 |
+| 구현 current HA × current/minimum BLE / PASS | `e70ee806dcbb8ebc561304253a8bbd373f9826b0` 대응 freeze diff | Python3.14.5 / HA2026.10.2 / plugin0.13.373 | blesession0.9.0 양mode, extras/marker없음; pycares5.2.0 | 별도2venv sharedinstaller→pytest tests/components/minibig/ -q→pip check 각106passed skip0 | 실물/UI미검증 |
+| 구현 minimum HA × current/minimum BLE / PASS | `e70ee806dcbb8ebc561304253a8bbd373f9826b0` 대응 freeze diff | Python3.13.14 / HA2025.8.0 / plugin0.13.269 | blesession0.9.0 양mode, pycares4.11.0 | 별도2venv 동일명령 각106passed skip0·pip check | 실물/UI미검증 |
+| 독립 current HA / PASS | `e70ee806dcbb8ebc561304253a8bbd373f9826b0` 대응 freeze diff | Python3.14.5 / HA2026.10.2 / plugin0.13.373 | blesession0.9.0 / pycares5.2.0 | 독립env manifest/HA재귀설치→pytest tests/components/minibig/ -v 106passed skip0·pip check | 실물/UI미검증 |
+| 독립 정확한 최소 HA / PASS | `e70ee806dcbb8ebc561304253a8bbd373f9826b0` 대응 freeze diff | Python3.13.14 / HA2025.8.0 / plugin0.13.269 | blesession0.9.0 / pycares4.11.0 | 독립env pytest tests/components/minibig/ -v 106passed skip0·pip check | macOS asyncinotify 경고1(플랫폼차이); 같은 구현 SHA Linux CI는warning0 |
+| 원격 current HA × current/minimum BLE / PASS | `e70ee806dcbb8ebc561304253a8bbd373f9826b0` | Python3.14.8 / HA2026.10.2 / plugin0.13.373 | blesession0.9.0 양mode / pycares5.2.0 | [Tests39042575895](https://github.com/eigger/hass-minibig/actions/runs/39042575895) 각106passed skip0 warning0·pip check / lint2 PASS | 실물/UI미검증 |
+| 원격 minimum HA × current/minimum BLE / PASS | `e70ee806dcbb8ebc561304253a8bbd373f9826b0` | Python3.13.16 / HA2025.8.0 / plugin0.13.269 | blesession0.9.0 양mode / pycares4.11.0 | [같은 Tests](https://github.com/eigger/hass-minibig/actions/runs/39042575895) 각106passed skip0 warning0·pip check | macOS warning은 Linux 원격에서 없음 |
+| 원격 HACS/Hassfest / PASS | `e70ee806dcbb8ebc561304253a8bbd373f9826b0` | 각 validator의 실제 원격 run | 브랜드 검사 포함, ignore없음 | [Validate39042575896](https://github.com/eigger/hass-minibig/actions/runs/39042575896) 양job 독립 PASS | UI표시/권리보증과 구별 |
 
 ## HACS·CI·의존성 업데이트
 
 | 규칙 ID | 확인 항목 | 상태 | 근거 / 남은 작업 |
 |---|---|---|---|
 | HACS-01, HACS-02 | 루트 README/LICENSE/hacs.json, 검증한 최소 HA, 실제 배포 구조와 필요한 옵션 일치 | PASS | 루트 README/LICENSE/hacs.json, custom_components/minibig 배포. hacs.homeassistant2025.8.0 유지·실제 최소106tests통과, 불필요 zip/content 옵션 추가 없음. |
-| HACS-03, HACS-05 | Default 여부는 목록 근거로 확인, [로컬 brand/icon.png 또는 원격 brands 근거](https://github.com/eigger/hass-repo-standards/blob/b1c80cf2c4bf8b4bc4e3556409ad948b7f850ea0/docs/hacs.md)와 HACS/Hassfest 실제 실행, ignore는 이유·해제 조건 기록 | TODO | HACS Custom 표기. 기존 brand/icon 실제PNG256×256 RGB, 기존512×512를 icon@2x로 보존; logo444×128 RGBA 유지. 기존출처 e205ba1·MIT·권리한계 development 기록. 브랜드 포함 원격 HACS/Hassfest 정확 게시SHA 검사 대기; ignore 없음. |
+| HACS-03, HACS-05 | Default 여부는 목록 근거로 확인, [로컬 brand/icon.png 또는 원격 brands 근거](https://github.com/eigger/hass-repo-standards/blob/b1c80cf2c4bf8b4bc4e3556409ad948b7f850ea0/docs/hacs.md)와 HACS/Hassfest 실제 실행, ignore는 이유·해제 조건 기록 | PASS | HACS Custom 표기. 기존 brand/icon 실제PNG256×256 RGB, 기존512×512를 icon@2x로 보존; logo444×128 RGBA 유지. 기존출처 e205ba1·MIT·권리한계 development 기록. [정확 구현 SHA Validate39042575896](https://github.com/eigger/hass-minibig/actions/runs/39042575896) 브랜드 포함 HACS·Hassfest 독립 PASS; ignore 없음. |
 | HACS-06 (권장) | description·topics·issue 경로·brands 및 사용하는 HACS 필드 지원 확인 | PASS | 실제 원격 Issues/Discussions·MIT·main·정식 v0.3.0 확인. 로컬 brand 실형식 확인; description/topics 설정은 이번 범위에서 변경하지 않음. 임의 HACS 필드 없음. |
 | CI-01, CI-02 | Validate/Python Tests 공통화, 확장 job 유지, PR·실제 기본 브랜치 push·dispatch 및 필요한 schedule | PASS | Tests·Validate·Update dependencies 중앙재사용으로 통합. Tests/Validate는 mainpush·PR·dispatch·schedule, updater는 weekly/dispatch. 기존 별도 UI/build job 없음. |
 | CI-03, CI-05, CI-08 | 최소 권한·checkout 자격증명 비보존·timeout·concurrency, full SHA·갱신 관리, 비신뢰 입력·secrets 경계 | PASS | caller contents:read, updater job만 contents/PRwrite. 중앙 pin b1c80cf·actions fullSHA·checkout credentials비보존·timeout/concurrency·bot비취소. Dependabot 액션갱신, untrusted PR metadata shell직삽입/secrets inherit 없음. |
-| CI-04, CI-07, CI-12 | 실패를 숨기지 않는 실제 `ha` 필수 테스트, 버전별 환경·cache·Ruff 설정과 required checks 이름 확인 | PASS | ha 필수·최소/current HA×BLE 네 matrix, lint별도; 실패은폐/skip없음, cache와 requirements/manifest 포함. 원격 branch protection404/rulesets[]라 기존 required check 없음·설정변경없음. 원격 실행결과는 아래 TODO. |
+| CI-04, CI-07, CI-12 | 실패를 숨기지 않는 실제 `ha` 필수 테스트, 버전별 환경·cache·Ruff 설정과 required checks 이름 확인 | PASS | ha 필수·최소/current HA×BLE 네 matrix, lint별도; 실패은폐/skip없음, cache와 requirements/manifest 포함. 원격 branch protection404/rulesets[]라 기존 required check 없음·설정변경없음. 정확 구현 SHA 원격 Tests의4matrix·lint2 모두성공, 환경표 참조. |
 | DEP-03, DEP-04, CI-09 | updater의 선택 package·연산자/extras/marker 보존, 안정 버전·major 정책, 실제 기본 브랜치·단일 bot branch·PR만 제안 | PASS | update_dependencies.yml blesession만 선택·기준SHA핀 중앙bot 사용. 안정 PyPI/연산자 보존·기본브랜치 API·단일 bot branch·PR제안만. 독립 dry-run unchanged blesession0.9.0; 최소 requirements/constraints Dependabot 제외, current HA/plugin group. |
 | CI-09, CI-10, DEP-08 | 변경 tree의 새 하한·실제 HA 검증 후 PR 동기화, 실패 시 중단·변경 없음 시 기존 PR 정리, 후속 required checks 충족 방식 확인 | PASS | 중앙 updater의 변경 tree 새 정확하한 설치·실제 ha 테스트+lint 후 PR 동기화/실패중단 계약 사용. dry-run 변경없음 독립확인; writable dispatch/가짜update PR 실행하지 않음. GITHUB_TOKEN PR이 자동CI보장하지 않음을 development에 명시. |
 
@@ -98,11 +100,11 @@ MiniBig 첫 채택의 실제 점검 기록입니다. 미완료 항목은 TODO로
 
 | 규칙 ID | 예외 위치 / 이유 | 담당자 | 재검토 조건 |
 |---|---|---|---|
-| 없음 (현재 로컬검토) | 기록된 예외 없음; 원격/중앙종료 필수 TODO는 예외로 대체하지 않음 | root | 최종원격검증후재확인 |
+| 없음 | 구현 main 및 해당 SHA 원격 독립 검증과 중앙 종료 근거 확인. 적용 필수 EXCEPTION 없음 | root | 후속 규칙/구현 변경 시 재검토 |
 
 | 규칙 ID / TODO | 남은 작업 / issue·PR | 담당자 | 완료 근거 |
 |---|---|---|---|
-| GOV-04, HACS-05, 원격CI | 기본브랜치push·게시SHA Tests/Validate·중앙종료·체크리스트마감 대기 | root·minibig_docs·minibig_review | 아직미완료 |
+| 현재 적용 필수 TODO 없음 | 구현 e70ee806과 중앙 종료 D 확인; 이 마감 문서 push·문서 SHA CI·중앙 최종 상태 갱신은 조율 단계에서 후속 확인 | root·minibig_review | 구현 Test/Validate·중앙 종료 링크 위 참조 |
 
 최종 검토 시 적용 대상 필수 `TODO`와 `EXCEPTION`, 이유가 있는 `N/A`, 권장 미채택을 구분해 적습니다. CI 성공만으로 실물 기기 검증을 주장하지 않습니다. 실물 검증을 수행했다면 모델·펌웨어·어댑터/proxy·연결 경로와 결과를 별도로 기록합니다.
 
@@ -112,8 +114,10 @@ MiniBig 첫 채택의 실제 점검 기록입니다. 미완료 항목은 TODO로
 
 2026-10-17 최종 구현 freeze 후 구현 담당 네 격리 환경과 독립 리뷰 담당 두 격리 환경에서 동일 tree의 actual HA 106cases 모두 통과했습니다. 기존 79함수 모두 보존, 최종105함수(한 파라미터 추가로106cases), skip0입니다. 신규 coverage는 실제 setup/flow/options·registry/state/actions·저장identity·stale정리·광고자가복구·live/restore양분기·실제partialforwardrollback·subscribe취소·coordinator생성자실패전구독미취득·오류진단·number DPoverride입니다. select는 기존 프로필 모두 enum값 미측정으로 노출하지 않는 조건을 확인했으며 미구현 선택값을 만들어 지원으로 주장하지 않습니다.
 
-명령: docs/development.md의 INPUT_DOMAIN=minibig·ha profile·각 requirements·expected HA·ha-components로 shared installer(bootstrap pip/packaging, RUNNER_TEMP 별도), 구현 환경에서 `python -m pytest tests/components/minibig/ -q`, 독립 환경에서 `python -m pytest tests/components/minibig/ -v`, 양쪽 `python -m pip check`. 최소/current 라이브러리는 별도 환경으로 설치했습니다. Ruff check/format(49files), actionlint(shellcheck/pyflakes별도비활성), diffcheck PASS. 독립 updater PyPI dry-run은 blesession0.9.0 변경없음. `sync_badges.py --check`, 로컬파일링크 누락0, 중앙 check_repository 26문서7workflow PASS. 설치/린트와 실제HA성공은 구별하며 아직 게시하지 않은 SHA의 원격결과를 주장하지 않습니다.
+명령: docs/development.md의 INPUT_DOMAIN=minibig·ha profile·각 requirements·expected HA·ha-components로 shared installer(bootstrap pip/packaging, RUNNER_TEMP 별도), 구현 환경에서 `python -m pytest tests/components/minibig/ -q`, 독립 환경에서 `python -m pytest tests/components/minibig/ -v`, 양쪽 `python -m pip check`. 최소/current 라이브러리는 별도 환경으로 설치했습니다. Ruff check/format(49files), actionlint(shellcheck/pyflakes별도비활성), diffcheck PASS. 독립 updater PyPI dry-run은 blesession0.9.0 변경없음. `sync_badges.py --check`, 로컬파일링크 누락0, 중앙 check_repository 26문서7workflow PASS. 설치/린트와 실제HA성공은 구별하며 위 원격 결과는 실제 게시된 구현 SHA e70ee806의 근거입니다. 이 마감 문서의 미래 SHA/CI를 추정하지 않습니다.
 
 브랜드는 초기 e205ba10b4616c28db8aa9f538b928d6b1ef5697의512 PNG icon을 icon@2x로 보존하고256 icon을 추가했습니다. logo444×128 RGBA는 보존. 출처·기존MIT와 권리/표시 한계는 development에 기록했습니다. 실물·새프록시보드·HA frontend UI는 미검증이며 과거README CLWM-B06관측과 분리합니다.
 
-최종 추가 경계 수정 뒤 독립 재검증: current106passed27.06s, minimum106passed26.07s(skip0)·양 pip check PASS. 구현 네 환경도 각106passed. 독립 로그 `/tmp/minibig-review-current-final2.log`, `/tmp/minibig-review-min-final2.log` (로컬 검증 이력; 게시 SHA 원격 증거는 별도 기록).
+최종 추가 경계 수정 뒤 독립 재검증: current106passed27.06s, minimum106passed26.07s(skip0)·양 pip check PASS. 구현 네 환경도 각106passed. 독립 로그 `/tmp/minibig-review-current-final2.log`, `/tmp/minibig-review-min-final2.log` (로컬 검증 이력; 구현 SHA 원격 증거는 위 환경표에 별도 기록).
+
+원격 Tests current/current job117424851899·current/minimum117424851894·minimum/current117424851913·minimum/minimum117424851940 및 lint117424851782/117424851933를 독립 검토했습니다. 네 matrix의 실제 설치값·pip check·106passed/skip0/warning0과 Validate HACS117424851847/Hassfest117424851640 성공을 확인했습니다. 이후 마감 문서 커밋은 이 문서와 STANDARDS 두 파일만 변경하며 별도 자동 CI 결과를 조율자가 확인하고 중앙 최종 행에 실제 링크를 기록합니다.
