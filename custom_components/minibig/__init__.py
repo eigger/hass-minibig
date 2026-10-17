@@ -218,7 +218,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: MiniBigConfigEntry) -> b
     # elsewhere in this integration (see MiniBigActiveCoordinator).
     await active_coordinator.async_refresh()
 
-    # Forward entry setups to platforms
     # Entities dropped from the integration would otherwise linger as
     # "no longer provided" until the user deletes them by hand.
     ent_reg = er.async_get(hass)
@@ -226,6 +225,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: MiniBigConfigEntry) -> b
         if entity_id := ent_reg.async_get_entity_id(platform, DOMAIN, f"{entry.unique_id}_{key}"):
             ent_reg.async_remove(entity_id)
 
+    # Forward entry setups to platforms
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     return True

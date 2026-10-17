@@ -46,9 +46,7 @@ async def async_setup_entry(
 
     # Add battery sensor if supported by profile
     if data.profile.dp_battery is not None:
-        entities.append(
-            MiniBigBatterySensor(entry, data.active_coordinator, data.profile.dp_battery)
-        )
+        entities.append(MiniBigBatterySensor(entry, data.active_coordinator, data.profile.dp_battery))
 
     async_add_entities(entities)
 
@@ -237,7 +235,7 @@ class MiniBigConnectionDurationSensor(MiniBigSessionReportSensor):
     """How long the last new BLE connection took to establish.
 
     Only sessions that opened a new link and succeeded count: a reused link
-    has no connect stage and a failed one is Last Failure's business. Status
+    has no connect stage (and after a recovery the time includes its wait) and a failed one is Last Failure's business. Status
     polls are not filed, so only commands move this.
     """
 
@@ -245,6 +243,22 @@ class MiniBigConnectionDurationSensor(MiniBigSessionReportSensor):
     _attr_native_unit_of_measurement = UnitOfTime.SECONDS
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_suggested_display_precision = 1
+    # The breakdown changes on every new connection; keep it out of the recorder.
+    _unrecorded_attributes = frozenset(
+        {
+            "via",
+            "rssi",
+            "paths",
+            "connect_s",
+            "total_s",
+            "transfer_s",
+            "session_s",
+            "disconnect_s",
+            "finish_s",
+            "auth_s",
+            "unreachable_s",
+        }
+    )
 
     def __init__(self, entry: MiniBigConfigEntry, coordinator: MiniBigActiveCoordinator) -> None:
         """Initialize connection duration sensor."""
