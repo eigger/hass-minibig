@@ -96,17 +96,14 @@
       "rssi": {
         "name": "신호 세기 (RSSI)"
       },
-      "last_status": {
-        "name": "마지막 응답 상태"
-      },
       "last_failure": {
         "name": "마지막 실패 시각"
       },
-      "last_error": {
-        "name": "마지막 오류"
-      },
       "error_count": {
         "name": "오류 횟수"
+      },
+      "connection_duration": {
+        "name": "연결 시간"
       }
     },
     "binary_sensor": {
@@ -148,9 +145,6 @@
       },
       "unpair_emitter": {
         "name": "리모컨 해제"
-      },
-      "clear_errors": {
-        "name": "오류 기록 초기화"
       }
     },
     "select": {

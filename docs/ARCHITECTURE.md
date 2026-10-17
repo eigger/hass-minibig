@@ -52,9 +52,9 @@ graph TD
 ### 2.4 Entity Platforms
 - **`cover.py`**: Window Opener entity with target positioning (0~100%, reported unmodified — verified to match the vendor app's own reading exactly, including non-round endpoints), immediate stop, direction tracking (`is_opening`/`is_closing`), and `RestoreEntity`.
 - **`switch.py`**: Power switch for Push/Switch devices with optimistic feedback and readback synchronization.
-- **`sensor.py`**: Battery level sensor (`dp10`), diagnostic RSSI sensor, diagnostic last status sensor, and the error diagnostics fed by the BLE session reports: **Last Failure** (timestamp; attributes carry the full breakdown — operation, error, failed stage, likely cause, radio `via`/`rssi`/`paths`, per-stage timings), **Last Error** (error text) and **Error Count** (since load or since *Clear Errors*). They are always available and refresh on every filed report.
+- **`sensor.py`**: Battery level sensor (`dp10`), diagnostic RSSI sensor, and the error diagnostics fed by the BLE session reports: **Last Failure** (timestamp; attributes carry the full breakdown — operation, error, failed stage, likely cause, radio `via`/`rssi`/`paths`, per-stage timings), **Error Count** (since load) and **Connection Duration** (last new connection) — always available, refreshed on every filed report.
 - **`binary_sensor.py`**: Moving state (active when receiving `REPORT_DPS`), connectivity state (diagnostic — the live GATT link, driven by the connection manager's link-state callbacks, not by advertisements), in-range state (diagnostic — advertisement presence from the passive coordinator), and pairing mode (diagnostic).
-- **`button.py`**: Restart, Refresh, Clear Errors (diagnostic — resets the error diagnostics), and Factory Reset buttons.
+- **`button.py`**: Restart, Refresh, and Factory Reset buttons.
 
 ---
 

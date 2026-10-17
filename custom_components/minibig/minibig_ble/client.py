@@ -131,7 +131,6 @@ class MiniBigConnection:
         # builder is injected (it needs hass for the radio facts); without
         # one a minimal report is filed so a failure is still counted.
         self.reports = SessionReports()
-        self._reports_listeners: list[Callable[[], None]] = []
         self.report_builder = report_builder
 
         self._client_override = client_override
@@ -167,7 +166,6 @@ class MiniBigConnection:
         self._background_tasks: set[asyncio.Task[Any]] = set()
 
         self._is_moving: bool = False
-        self._last_status: int | None = None
         self._is_notifying: bool = False
         # Last connection state pushed to callbacks, so repeated connect() /
         # disconnect() calls that do not actually change the link state stay
@@ -221,11 +219,6 @@ class MiniBigConnection:
     def is_moving(self) -> bool:
         """Return True if cover/device is actively moving."""
         return self._is_moving
-
-    @property
-    def last_status(self) -> int | None:
-        """Return last received status code."""
-        return self._last_status
 
     def register_report_callback(self, callback: Callable[[Response], None]) -> Callable[[], None]:
         """Register callback for status updates and return unregister function."""
@@ -351,7 +344,6 @@ class MiniBigConnection:
         self._touch()
 
         resp = parse_response(raw)
-        self._last_status = resp.status
 
         if resp.dps:
             _LOGGER.debug("Parsed %d DP(s) from %s: %s", len(resp.dps), self.device_info.address, resp.dps)
@@ -383,32 +375,6 @@ class MiniBigConnection:
                 cb(resp)
             except Exception as err:
                 _LOGGER.error("Error in report callback: %s", err)
-
-    def add_reports_listener(self, listener: Callable[[], None]) -> Callable[[], None]:
-        """Call ``listener`` after a report is filed or the reports are cleared.
-
-        SessionReports notifies on record() but not on clear(), so the
-        connection fans out both itself instead of reaching into the library.
-        Returns the function that removes the listener.
-        """
-        self._reports_listeners.append(listener)
-        remove_filed = self.reports.add_listener(listener)
-
-        def remove() -> None:
-            remove_filed()
-            if listener in self._reports_listeners:
-                self._reports_listeners.remove(listener)
-
-        return remove
-
-    def clear_reports(self) -> None:
-        """Forget every recorded report and refresh whoever displays them."""
-        self.reports.clear()
-        for listener in list(self._reports_listeners):
-            try:
-                listener()
-            except Exception:  # noqa: BLE001 - one bad listener must not stop the rest
-                _LOGGER.exception("A session report listener raised")
 
     def _file_session(
         self,

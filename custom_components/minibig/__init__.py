@@ -10,6 +10,7 @@ from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.typing import ConfigType
 
 from .const import (
@@ -55,6 +56,23 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the MiniBig integration (registers services)."""
     await async_setup_services(hass)
     return True
+
+
+# (platform, unique-id key) of entities that earlier versions created.
+_REMOVED_ENTITIES = (
+    ("sensor", "last_status"),
+    ("sensor", "last_error"),
+    ("button", "clear_errors"),
+)
+
+
+@callback
+def _async_remove_stale_entities(hass: HomeAssistant, entry: MiniBigConfigEntry) -> None:
+    """Drop entities earlier versions created, so they do not linger as unavailable."""
+    ent_reg = er.async_get(hass)
+    for platform, key in _REMOVED_ENTITIES:
+        if entity_id := ent_reg.async_get_entity_id(platform, DOMAIN, f"{entry.unique_id}_{key}"):
+            ent_reg.async_remove(entity_id)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: MiniBigConfigEntry) -> bool:
@@ -208,6 +226,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: MiniBigConfigEntry) -> b
     # official app, and a failed poll is explicitly treated as non-fatal
     # elsewhere in this integration (see MiniBigActiveCoordinator).
     await active_coordinator.async_refresh()
+
+    _async_remove_stale_entities(hass, entry)
 
     # Forward entry setups to platforms
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
