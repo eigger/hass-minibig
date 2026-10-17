@@ -10,7 +10,7 @@ For a window opener, finish vendor-app mounting, opening direction and travel-li
 
 ## Discovery and connection are separate
 
-Follow the [shared Bluetooth setup, recommended devices and connection checklist (Korean)](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.md). Its XIAO W5500 and USB-A AtomS3U recommendations are shared guidance, not hardware verified with this integration during adoption.
+Follow the [Bluetooth proxy setup](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.md). Its XIAO W5500 and USB-A AtomS3U recommendations are shared guidance, not hardware verified with this integration during adoption.
 
 1. Check that HA's Bluetooth integration and the intended local adapter/proxy are online, powered and in range. Compare proximity to the device; metal window frames and proxy network interruptions affect reception.
 2. Check advertisements first. The passive coordinator requests HA `BluetoothScanningMode.ACTIVE`; an active scan requests advertising scan responses. This is distinct from ESPHome proxy `bluetooth_proxy.active`, which enables active GATT connections. Seeing an advertisement does not prove that a proxy has an available connectable GATT route.

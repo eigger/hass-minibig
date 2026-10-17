@@ -26,7 +26,7 @@ See [device profiles, options and protocol details](docs/usage.md). Legacy PushM
 
 Home Assistant **2025.8.0 or newer** and a connectable Bluetooth adapter/proxy in range. Home Assistant installs `blesession` automatically. Complete initial mounting, direction and travel-limit calibration with the vendor app, then disconnect the app before HA control.
 
-For proxy configuration and recommended hardware, use the [shared Bluetooth guide (Korean)](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.md). Discovery scans and active GATT connections are separate requirements.
+For proxy configuration and recommended hardware, use the [Bluetooth proxy setup](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.md). Discovery scans and active GATT connections are separate requirements.
 
 ## Installation
 

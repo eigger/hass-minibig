@@ -26,7 +26,7 @@ MiniBig 창문 오프너와 PushMini/SwitchMini를 클라우드 계정·HubMini 
 
 Home Assistant **2025.8.0 이상**, 기기 범위 안의 연결 가능한 Bluetooth 어댑터/프록시가 필요합니다. `blesession`은 HA가 자동 설치합니다. 최초 설치 유형·방향·이동 한계 캘리브레이션은 공식 앱에서 마치고, HA 제어 전 앱 연결을 해제하세요.
 
-프록시 설정·추천 기기는 [공통 Bluetooth 안내](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.md)를 따릅니다. 광고 스캔과 active GATT 연결은 다른 조건입니다.
+프록시 설정·추천 기기는 [Bluetooth 프록시 설정](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.ko.md)을 따릅니다. 광고 스캔과 active GATT 연결은 다른 조건입니다.
 
 ## 설치
 

@@ -10,7 +10,7 @@
 
 ## 광고 발견과 GATT 연결 구별
 
-[공통 Bluetooth 설정·추천 기기·연결 확인 순서](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.md)를 따르세요. XIAO W5500와 USB-A 동글 형태 AtomS3U 추천은 공통 안내이며, 이번 작업에서 MiniBig과 새로 실물 검증한 기기가 아닙니다.
+[Bluetooth 프록시 설정](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.ko.md)을 따르세요. XIAO W5500와 USB-A 동글 형태 AtomS3U 추천은 공통 안내이며, 이번 작업에서 MiniBig과 새로 실물 검증한 기기가 아닙니다.
 
 1. HA Bluetooth와 사용할 로컬 어댑터/프록시가 온라인이고 전원·거리가 적절한지 확인합니다. 금속 창틀과 프록시 네트워크 끊김도 수신에 영향을 줍니다.
 2. 광고부터 확인합니다. passive coordinator는 HA `BluetoothScanningMode.ACTIVE`를 요청합니다. active scan은 광고의 scan response를 요청하는 기능이며, active GATT 연결을 허용하는 ESPHome `bluetooth_proxy.active`와 다릅니다. 광고가 보여도 연결 가능한 경로나 빈 GATT 슬롯이 있다는 뜻은 아닙니다.
