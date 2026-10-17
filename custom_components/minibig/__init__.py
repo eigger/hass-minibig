@@ -151,7 +151,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: MiniBigConfigEntry) -> b
     # all: RSSI/connectivity/pairing-mode entities stay stuck at their initial
     # (usually unknown) value forever, and the device_info self-heal listener
     # registered below never fires either.
-    entry.async_on_unload(passive_coordinator.async_start())
+    passive_unsubscribers = []
+
+    @callback
+    def _cleanup_passive() -> None:
+        # HA versions differ in whether failed/cancelled setup executes unload
+        # callbacks. Own an idempotent cleanup for both those and normal unload.
+        while passive_unsubscribers:
+            passive_unsubscribers.pop()()
 
     @callback
     def _refresh_connection_device_info() -> None:
@@ -196,8 +203,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: MiniBigConfigEntry) -> b
                 },
             )
 
-    entry.async_on_unload(passive_coordinator.async_add_listener(_refresh_connection_device_info))
-
     active_coordinator = MiniBigActiveCoordinator(
         hass,
         _LOGGER,
@@ -225,12 +230,25 @@ async def async_setup_entry(hass: HomeAssistant, entry: MiniBigConfigEntry) -> b
     # device is battery powered and frequently out of range or busy with the
     # official app, and a failed poll is explicitly treated as non-fatal
     # elsewhere in this integration (see MiniBigActiveCoordinator).
-    await active_coordinator.async_refresh()
-
-    _async_remove_stale_entities(hass, entry)
-
-    # Forward entry setups to platforms
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    try:
+        # Construct both coordinators before registering external callbacks.
+        # A constructor error must not leave an advertisement subscription.
+        passive_unsubscribers.append(passive_coordinator.async_start())
+        passive_unsubscribers.append(passive_coordinator.async_add_listener(_refresh_connection_device_info))
+        entry.async_on_unload(_cleanup_passive)
+        await active_coordinator.async_refresh()
+        _async_remove_stale_entities(hass, entry)
+        await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    except BaseException:
+        _cleanup_passive()
+        # First refresh is intentionally non-fatal for sleeping devices, but a
+        # cancelled refresh or failed platform setup must release the BLE link.
+        try:
+            await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+        finally:
+            active_coordinator.async_unload()
+            await connection.close()
+        raise
 
     return True
 

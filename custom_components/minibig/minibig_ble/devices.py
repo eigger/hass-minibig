@@ -80,9 +80,7 @@ class DeviceProfile:
 
     model_name: str
     manufacturer: str = "MiniBig"
-    platforms: list[str] = field(
-        default_factory=lambda: ["sensor", "binary_sensor", "button"]
-    )
+    platforms: list[str] = field(default_factory=lambda: ["sensor", "binary_sensor", "button"])
     refresh_strategy: str = "read_dps"  # "dp3", "read_dps", "read_setting", "none"
     dp_position: int | None = None
     dp_stop: int | None = None

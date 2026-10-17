@@ -53,10 +53,7 @@ class MiniBigWindowOpenerCover(
 
     _attr_has_entity_name = True
     _attr_supported_features = (
-        CoverEntityFeature.OPEN
-        | CoverEntityFeature.CLOSE
-        | CoverEntityFeature.STOP
-        | CoverEntityFeature.SET_POSITION
+        CoverEntityFeature.OPEN | CoverEntityFeature.CLOSE | CoverEntityFeature.STOP | CoverEntityFeature.SET_POSITION
     )
 
     def __init__(
@@ -82,7 +79,12 @@ class MiniBigWindowOpenerCover(
             identifiers={(DOMAIN, address)},
         )
 
-        self._last_known_position: int | None = None
+        # The initial refresh happens before platforms are loaded. Seed from
+        # its result so startup does not wait for the next periodic update.
+        raw_position = (coordinator.data or {}).get(pos_dp) if pos_dp is not None else None
+        self._last_known_position: int | None = (
+            self._normalize_position(raw_position) if raw_position is not None else None
+        )
         self._previous_position: int | None = None
         self._target_position: int | None = None
         self._unsub_movement = None
@@ -98,7 +100,11 @@ class MiniBigWindowOpenerCover(
         """Restore previous state and subscribe to movement events."""
         await super().async_added_to_hass()
         last_state = await self.async_get_last_state()
-        if last_state and last_state.attributes.get("current_position") is not None:
+        if (
+            self._last_known_position is None
+            and last_state
+            and last_state.attributes.get("current_position") is not None
+        ):
             try:
                 self._last_known_position = int(last_state.attributes["current_position"])
             except (ValueError, TypeError):

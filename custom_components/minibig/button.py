@@ -45,9 +45,7 @@ async def async_setup_entry(
     for slot in (SLOT_MEASURE, SLOT_MEASURE_STOP, SLOT_PAIR_EMITTER, SLOT_UNPAIR_EMITTER):
         dp_id = resolve_dp(data.profile, slot, overrides)
         if dp_id is not None:
-            entities.append(
-                MiniBigDpActionButton(entry, data.active_coordinator, slot, dp_id)
-            )
+            entities.append(MiniBigDpActionButton(entry, data.active_coordinator, slot, dp_id))
 
     async_add_entities(entities)
 
@@ -81,9 +79,7 @@ class MiniBigRestartButton(MiniBigBaseButton):
 
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
-    def __init__(
-        self, entry: MiniBigConfigEntry, coordinator: MiniBigActiveCoordinator
-    ) -> None:
+    def __init__(self, entry: MiniBigConfigEntry, coordinator: MiniBigActiveCoordinator) -> None:
         """Initialize restart button."""
         super().__init__(entry, coordinator, "restart", "restart")
 
@@ -98,9 +94,7 @@ class MiniBigRestartButton(MiniBigBaseButton):
 class MiniBigRefreshButton(MiniBigBaseButton):
     """Button to manually refresh device state."""
 
-    def __init__(
-        self, entry: MiniBigConfigEntry, coordinator: MiniBigActiveCoordinator
-    ) -> None:
+    def __init__(self, entry: MiniBigConfigEntry, coordinator: MiniBigActiveCoordinator) -> None:
         """Initialize refresh button."""
         super().__init__(entry, coordinator, "refresh", "refresh")
 
@@ -110,7 +104,6 @@ class MiniBigRefreshButton(MiniBigBaseButton):
             await self.coordinator.async_request_refresh()
         except Exception as err:
             raise HomeAssistantError(f"Failed to refresh MiniBig device: {err}") from err
-
 
 
 class MiniBigDpActionButton(MiniBigBaseButton):
@@ -137,9 +130,7 @@ class MiniBigDpActionButton(MiniBigBaseButton):
     async def async_press(self) -> None:
         """Trigger the device operation."""
         try:
-            await self.entry.runtime_data.connection.send_dps(
-                [(self._dp_id, self.TRIGGER_VALUE)]
-            )
+            await self.entry.runtime_data.connection.send_dps([(self._dp_id, self.TRIGGER_VALUE)])
         except MiniBigSupersededError:
             return
         except Exception as err:

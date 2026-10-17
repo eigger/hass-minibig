@@ -53,9 +53,7 @@ class MiniBigConfigFlow(ConfigFlow, domain=DOMAIN):
         self._discovery_info: BluetoothServiceInfoBleak | None = None
         self._device_info: MiniBigDeviceInfo | None = None
 
-    async def async_step_bluetooth(
-        self, discovery_info: BluetoothServiceInfoBleak
-    ) -> ConfigFlowResult:
+    async def async_step_bluetooth(self, discovery_info: BluetoothServiceInfoBleak) -> ConfigFlowResult:
         """Handle discovery via Bluetooth."""
         await self.async_set_unique_id(discovery_info.address)
         self._abort_if_unique_id_configured()
@@ -67,7 +65,7 @@ class MiniBigConfigFlow(ConfigFlow, domain=DOMAIN):
         if not dev_info.supported or dev_info.d_type == 2:
             _LOGGER.info(
                 "HubMini device (%s) detected. HubMini is a gateway and not supported directly",
-                discovery_info.address,
+                "[redacted]",
             )
             return self.async_abort(reason="hubmini_not_supported")
 
@@ -80,9 +78,7 @@ class MiniBigConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return await self.async_step_bluetooth_confirm()
 
-    async def async_step_bluetooth_confirm(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_bluetooth_confirm(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Confirm discovery."""
         assert self._device_info is not None
         dev_info = self._device_info
@@ -107,9 +103,7 @@ class MiniBigConfigFlow(ConfigFlow, domain=DOMAIN):
             },
         )
 
-    async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle manual user discovery."""
         errors: dict[str, str] = {}
 
@@ -169,9 +163,7 @@ class MiniBigConfigFlow(ConfigFlow, domain=DOMAIN):
 class MiniBigOptionsFlowHandler(OptionsFlowWithReload):
     """Handle MiniBig options flow."""
 
-    async def async_step_init(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Manage the options."""
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
@@ -190,17 +182,13 @@ class MiniBigOptionsFlowHandler(OptionsFlowWithReload):
                         CONF_POLL_INTERVAL_MIN,
                         default=options.get(CONF_POLL_INTERVAL_MIN, DEFAULT_POLL_INTERVAL_MIN),
                     ): selector.NumberSelector(
-                        selector.NumberSelectorConfig(
-                            min=0, max=1440, step=1, mode=selector.NumberSelectorMode.BOX
-                        )
+                        selector.NumberSelectorConfig(min=0, max=1440, step=1, mode=selector.NumberSelectorMode.BOX)
                     ),
                     vol.Optional(
                         CONF_RETRY_COUNT,
                         default=options.get(CONF_RETRY_COUNT, DEFAULT_RETRY_COUNT),
                     ): selector.NumberSelector(
-                        selector.NumberSelectorConfig(
-                            min=1, max=5, step=1, mode=selector.NumberSelectorMode.BOX
-                        )
+                        selector.NumberSelectorConfig(min=1, max=5, step=1, mode=selector.NumberSelectorMode.BOX)
                     ),
                     vol.Optional(
                         CONF_POWER_DP_ID,

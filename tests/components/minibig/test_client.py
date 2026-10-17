@@ -23,7 +23,7 @@ from custom_components.minibig.minibig_ble.const import (
     StatusCode,
 )
 from custom_components.minibig.minibig_ble.parser import MiniBigDeviceInfo
-from tests.fake_transport import FakeBleakClient
+from tests.components.minibig.fake_transport import FakeBleakClient
 
 
 def _make_dev() -> MiniBigDeviceInfo:
@@ -93,8 +93,8 @@ async def test_command_coalescing_rapid_fire():
 
     # Fire 3 commands concurrently while disconnected
     task1 = asyncio.create_task(conn.send_dps([(0, 100)]))  # Open (overwritten)
-    task2 = asyncio.create_task(conn.send_dps([(0, 0)]))    # Close (overwritten)
-    task3 = asyncio.create_task(conn.send_dps([(3, 0)]))    # Stop (latest)
+    task2 = asyncio.create_task(conn.send_dps([(0, 0)]))  # Close (overwritten)
+    task3 = asyncio.create_task(conn.send_dps([(3, 0)]))  # Stop (latest)
 
     # Task 1 & 2 should receive MiniBigSupersededError (which is an Exception, not CancelledError)
     results = await asyncio.gather(task1, task2, task3, return_exceptions=True)
@@ -279,8 +279,12 @@ async def test_slot_recovery_retry():
         client_override=fake_client,
     )
 
-    with patch("custom_components.minibig.minibig_ble.client.asyncio.sleep", new_callable=AsyncMock) as mock_sleep, \
-         patch("custom_components.minibig.minibig_ble.client.close_stale_connections_by_address", new_callable=AsyncMock) as mock_close:
+    with (
+        patch("custom_components.minibig.minibig_ble.client.asyncio.sleep", new_callable=AsyncMock) as mock_sleep,
+        patch(
+            "custom_components.minibig.minibig_ble.client.close_stale_connections_by_address", new_callable=AsyncMock
+        ) as mock_close,
+    ):
         await conn.connect()
         assert fake_client.is_connected is True
         mock_close.assert_called()
@@ -306,8 +310,12 @@ async def test_generic_connect_failure_also_recovers():
         client_override=fake_client,
     )
 
-    with patch("custom_components.minibig.minibig_ble.client.asyncio.sleep", new_callable=AsyncMock) as mock_sleep, \
-         patch("custom_components.minibig.minibig_ble.client.close_stale_connections_by_address", new_callable=AsyncMock) as mock_close:
+    with (
+        patch("custom_components.minibig.minibig_ble.client.asyncio.sleep", new_callable=AsyncMock) as mock_sleep,
+        patch(
+            "custom_components.minibig.minibig_ble.client.close_stale_connections_by_address", new_callable=AsyncMock
+        ) as mock_close,
+    ):
         await conn.connect()
         assert fake_client.is_connected is True
         mock_close.assert_called()
@@ -362,15 +370,17 @@ async def test_ble_device_reresolved_and_fails_clearly_when_none():
     fake_client = AsyncMock()
     fake_client.is_connected = True
 
-    with patch(
-        "blesession.session.establish_connection",
-        new_callable=AsyncMock,
-        return_value=fake_client,
-    ) as mock_establish, patch(
-        "custom_components.minibig.minibig_ble.client.asyncio.sleep", new_callable=AsyncMock
-    ), patch(
-        "custom_components.minibig.minibig_ble.client.close_stale_connections_by_address",
-        new_callable=AsyncMock,
+    with (
+        patch(
+            "blesession.session.establish_connection",
+            new_callable=AsyncMock,
+            return_value=fake_client,
+        ) as mock_establish,
+        patch("custom_components.minibig.minibig_ble.client.asyncio.sleep", new_callable=AsyncMock),
+        patch(
+            "custom_components.minibig.minibig_ble.client.close_stale_connections_by_address",
+            new_callable=AsyncMock,
+        ),
     ):
         await conn.connect()
 
@@ -388,9 +398,12 @@ async def test_ble_device_none_error_message_is_clear():
     dev = _make_dev()
     conn = MiniBigConnection(device_info=dev, ble_device_callback=lambda: None)
 
-    with patch("custom_components.minibig.minibig_ble.client.asyncio.sleep", new_callable=AsyncMock), patch(
-        "custom_components.minibig.minibig_ble.client.close_stale_connections_by_address",
-        new_callable=AsyncMock,
+    with (
+        patch("custom_components.minibig.minibig_ble.client.asyncio.sleep", new_callable=AsyncMock),
+        patch(
+            "custom_components.minibig.minibig_ble.client.close_stale_connections_by_address",
+            new_callable=AsyncMock,
+        ),
     ):
         with pytest.raises(MiniBigConnectionError, match=dev.address):
             await conn.connect()
@@ -454,3 +467,44 @@ async def test_stack_reported_disconnect_clears_state():
     assert conn.is_connected is False
     assert conn.is_moving is False
     assert events == [True, False]
+
+
+async def test_cancel_subscribe_closes_remote_link():
+    """Cancellation after connect cannot leave the peripheral slot occupied."""
+    client = FakeBleakClient()
+    connection = MiniBigConnection(_make_dev(), client_override=client)
+    reached = asyncio.Event()
+
+    async def subscribe(*args):
+        reached.set()
+        await asyncio.Event().wait()
+
+    client.start_notify = subscribe
+    task = asyncio.create_task(connection.connect())
+    await reached.wait()
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert not client.is_connected
+    assert not connection.is_connected
+    await connection.close()
+
+
+async def test_changed_gatt_service_recovers_on_next_connection():
+    """A stale notify characteristic fails once and is rediscovered next time."""
+    client = FakeBleakClient()
+    connection = MiniBigConnection(_make_dev(), client_override=client)
+    original = client.start_notify
+
+    async def stale_characteristic(*args):
+        raise RuntimeError("characteristic unavailable after services changed")
+
+    client.start_notify = stale_characteristic
+    with pytest.raises(MiniBigConnectionError):
+        await connection.connect()
+    assert not client.is_connected
+    client.start_notify = original
+    client.response_generator = lambda frame: bytes.fromhex("2afd000064")
+    response = await connection.send_dps([(0, 100)])
+    assert response.dps == {0: 100}
+    await connection.close()

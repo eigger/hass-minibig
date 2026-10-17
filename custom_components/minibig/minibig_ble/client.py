@@ -209,11 +209,7 @@ class MiniBigConnection:
         True between a successful connect() and the matching disconnect (idle
         timeout, session guard, unload, or a drop reported by the BLE stack).
         """
-        return (
-            self._client is not None
-            and self._client.is_connected
-            and self._is_notifying
-        )
+        return self._client is not None and self._client.is_connected and self._is_notifying
 
     @property
     def is_moving(self) -> bool:
@@ -245,7 +241,7 @@ class MiniBigConnection:
             try:
                 cb(connected)
             except Exception as err:
-                _LOGGER.error("Error in connection callback: %s", err)
+                _LOGGER.error("Error in connection callback: %s", type(err).__name__)
 
     def _on_client_disconnected(self, _client: Any, token: object = _NO_TOKEN) -> None:
         """Handle a link drop reported by the BLE stack.
@@ -257,9 +253,9 @@ class MiniBigConnection:
         the next command happens to fail.
         """
         if token is not _NO_TOKEN and token is not self._link_token:
-            _LOGGER.debug("Ignoring a late drop event from a replaced link to %s", self.device_info.address)
+            _LOGGER.debug("Ignoring a late drop event from a replaced link to %s", "[redacted]")
             return
-        _LOGGER.debug("BLE link to %s dropped by the stack", self.device_info.address)
+        _LOGGER.debug("BLE link to %s dropped by the stack", "[redacted]")
         self._is_notifying = False
         if self._movement_timer_handle:
             self._movement_timer_handle.cancel()
@@ -281,7 +277,7 @@ class MiniBigConnection:
                 try:
                     cb(moving)
                 except Exception as err:
-                    _LOGGER.error("Error in movement callback: %s", err)
+                    _LOGGER.error("Error in movement callback: %s", type(err).__name__)
 
     def _touch(self) -> None:
         """Record traffic activity and reset idle disconnect timer."""
@@ -294,7 +290,7 @@ class MiniBigConnection:
                 _LOGGER.warning(
                     "Session exceeded max duration (%.1fs) on %s, forcing disconnect",
                     self.max_session_s,
-                    self.device_info.address,
+                    "[redacted]",
                 )
                 if not self._session_guard_pending:
                     self._session_guard_pending = True
@@ -340,13 +336,13 @@ class MiniBigConnection:
     def _on_notify(self, _characteristic: Any, data: bytearray | bytes) -> None:
         """Handle incoming GATT notify packet."""
         raw = bytes(data)
-        _LOGGER.debug("GATT Notify from %s: %s", self.device_info.address, raw.hex())
+        _LOGGER.debug("GATT Notify from %s: %s", "[redacted]", "[payload omitted]")
         self._touch()
 
         resp = parse_response(raw)
 
         if resp.dps:
-            _LOGGER.debug("Parsed %d DP(s) from %s: %s", len(resp.dps), self.device_info.address, resp.dps)
+            _LOGGER.debug("Parsed %d DP(s) from %s: %s", len(resp.dps), "[redacted]", "[payload omitted]")
 
         # If device active streaming report (Opcode 24)
         if resp.method == Opcode.REPORT_DPS:
@@ -362,7 +358,7 @@ class MiniBigConnection:
                 try:
                     cb(resp)
                 except Exception as err:
-                    _LOGGER.error("Error in report callback: %s", err)
+                    _LOGGER.error("Error in report callback: %s", type(err).__name__)
             return
 
         # Standard command ack
@@ -374,7 +370,7 @@ class MiniBigConnection:
             try:
                 cb(resp)
             except Exception as err:
-                _LOGGER.error("Error in report callback: %s", err)
+                _LOGGER.error("Error in report callback: %s", type(err).__name__)
 
     def _file_session(
         self,
@@ -403,7 +399,7 @@ class MiniBigConnection:
                 raise LookupError("no report builder")
             report = self.report_builder(cmd.operation, trace, exc)
         except Exception as err:  # noqa: BLE001 - diagnostics must not mask the outcome
-            _LOGGER.debug("Building the session report failed: %s", err)
+            _LOGGER.debug("Building the session report failed: %s", type(err).__name__)
             report = fallback_report(cmd.operation, trace=trace, exc=exc)
         self.reports.record(report)
 
@@ -418,7 +414,7 @@ class MiniBigConnection:
             return
 
         address = self.device_info.address
-        _LOGGER.debug("Connecting to %s", address)
+        _LOGGER.debug("Connecting to %s", "[redacted]")
 
         async def _attempt_connect(*, first: bool, token: object) -> Any:
             if self._client_override is not None:
@@ -479,17 +475,15 @@ class MiniBigConnection:
                 first_exc.__cause__, BleakOutOfConnectionSlotsError
             ):
                 _LOGGER.warning(
-                    "BLE connection slots exhausted for %s, clearing stale link "
-                    "and waiting %.0fs to retry",
-                    address,
+                    "BLE connection slots exhausted for %s, clearing stale link and waiting %.0fs to retry",
+                    "[redacted]",
                     RECOVERY_WAIT_S,
                 )
             else:
                 _LOGGER.warning(
-                    "Connect to %s failed (%s), clearing stale link and waiting "
-                    "%.0fs to retry",
-                    address,
-                    first_exc,
+                    "Connect to %s failed (%s), clearing stale link and waiting %.0fs to retry",
+                    "[redacted]",
+                    type(first_exc).__name__,
                     RECOVERY_WAIT_S,
                 )
             try:
@@ -524,19 +518,20 @@ class MiniBigConnection:
             with trace.timed("subscribe"):
                 await self._client.start_notify(self.device_info.notify_uuid, self._on_notify)
             self._is_notifying = True
+        except asyncio.CancelledError:
+            await self.disconnect(fail_pending=False)
+            raise
         except Exception as exc:
             # A command queued meanwhile has not run yet: leave it for the
             # next loop instead of failing it with "Disconnected".
             await self.disconnect(fail_pending=False)
-            raise MiniBigConnectionError(
-                f"Failed to subscribe to notify on {address}: {exc}"
-            ) from exc
+            raise MiniBigConnectionError(f"Failed to subscribe to notify on {address}: {exc}") from exc
 
         self._link = trace.link
         self._session_start_time = time.monotonic()
         self._touch()
         self._notify_connection_state()
-        _LOGGER.debug("Connected and notifications enabled for %s", address)
+        _LOGGER.debug("Connected and notifications enabled for %s", "[redacted]")
 
     async def disconnect(self, *, fail_pending: bool = True) -> None:
         """Disconnect BLE connection and cancel all timers and in-flight waiters.
@@ -580,10 +575,10 @@ class MiniBigConnection:
                     async with asyncio.timeout(DISCONNECT_TIMEOUT_S):
                         await client.disconnect()
             except Exception as err:
-                _LOGGER.debug("Error disconnecting %s: %s", self.device_info.address, err)
+                _LOGGER.debug("Error disconnecting %s: %s", "[redacted]", type(err).__name__)
 
         self._notify_connection_state()
-        _LOGGER.debug("Disconnected from %s", self.device_info.address)
+        _LOGGER.debug("Disconnected from %s", "[redacted]")
 
     async def close(self) -> None:
         """Stop for good: refuse new commands, stop the worker, drop the link.
@@ -630,7 +625,7 @@ class MiniBigConnection:
                 "Coalescing: replacing previous pending command (opcode %s) with new opcode %s on %s",
                 self._pending_command.expected_method,
                 expected_method,
-                self.device_info.address,
+                "[redacted]",
             )
             self._pending_command.user_future.set_exception(
                 MiniBigSupersededError(
@@ -691,7 +686,7 @@ class MiniBigConnection:
                 try:
                     with trace.timed("write"):
                         async with self._write_lock:
-                            _LOGGER.debug("GATT Write to %s: %s", self.device_info.address, cmd.frame.hex())
+                            _LOGGER.debug("GATT Write to %s: %s", "[redacted]", "[payload omitted]")
                             chunk_size = 20
                             for i in range(0, len(cmd.frame), chunk_size):
                                 chunk = cmd.frame[i : i + chunk_size]
@@ -704,9 +699,7 @@ class MiniBigConnection:
                 except Exception as exc:
                     self._current_waiter = None
                     self._current_method = None
-                    error = MiniBigConnectionError(
-                        f"Failed writing command to {self.device_info.address}: {exc}"
-                    )
+                    error = MiniBigConnectionError(f"Failed writing command to {self.device_info.address}: {exc}")
                     error.__cause__ = exc
                     self._file_session(cmd, trace, error)
                     if not cmd.user_future.done():

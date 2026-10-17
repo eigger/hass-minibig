@@ -40,6 +40,7 @@ class FakeBleakClient:
         if self.slot_error_once and not self._slot_error_occurred:
             self._slot_error_occurred = True
             from custom_components.minibig.minibig_ble.client import BleakOutOfConnectionSlotsError
+
             raise BleakOutOfConnectionSlotsError("No free connection slots")
 
         if self.generic_error_once and not self._generic_error_occurred:

@@ -45,9 +45,7 @@ async def async_setup_entry(
         dp_id = resolve_dp(profile, slot, overrides)
         if dp_id is None:
             continue
-        entities.append(
-            MiniBigSettingNumber(entry, data.active_coordinator, slot, dp_id, max_value)
-        )
+        entities.append(MiniBigSettingNumber(entry, data.active_coordinator, slot, dp_id, max_value))
 
     async_add_entities(entities)
 
@@ -98,6 +96,4 @@ class MiniBigSettingNumber(CoordinatorEntity[MiniBigActiveCoordinator], NumberEn
         except MiniBigSupersededError:
             return
         except Exception as err:
-            raise HomeAssistantError(
-                f"Failed to set {self._slot} to {raw}: {err}"
-            ) from err
+            raise HomeAssistantError(f"Failed to set {self._slot} to {raw}: {err}") from err

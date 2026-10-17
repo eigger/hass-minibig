@@ -84,7 +84,7 @@ async def _async_for_each_device(
         try:
             await action(device_id, entry)
         except Exception as err:  # noqa: BLE001 - report per-device, keep going
-            _LOGGER.error("%s command failed for %s: %s", service, device_id, err)
+            _LOGGER.error("%s command failed for %s: %s", service, "[redacted]", type(err).__name__)
             errors.append(f"{device_id}: {err}")
 
     if errors:
@@ -106,9 +106,9 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             resp = await entry.runtime_data.connection.send_raw(method, payload)
             _LOGGER.info(
                 "minibig.send_raw response from %s: status=%s, data=%s",
-                entry.unique_id,
+                "[redacted]",
                 resp.status,
-                resp.data.hex(),
+                "[payload omitted]",
             )
             hass.bus.async_fire(
                 "minibig_raw_response",

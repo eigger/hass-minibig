@@ -43,9 +43,11 @@ def test_cover_and_switch_availability_with_none_dp():
 
     entry = MagicMock()
     entry.unique_id = "test_entry"
+    entry.options = {}
     entry.runtime_data.device_info.address = "11:22:33:44:55:66"
     coord = MagicMock()
     coord.last_update_success = True
+    coord.data = {}
 
     # Cover with pos_dp=None -> available=False
     cover_unconf = MiniBigWindowOpenerCover(entry, coord, pos_dp=None, stop_dp=3)
@@ -74,6 +76,7 @@ def test_new_setting_platforms_add_nothing_until_measured():
     entry = MagicMock()
     entry.unique_id = "test_entry"
     entry.options = {}
+    entry.options = {}
     entry.runtime_data.profile = PROFILE_WINDOW_OPENER
     entry.runtime_data.device_info.address = "11:22:33:44:55:66"
 
@@ -81,7 +84,5 @@ def test_new_setting_platforms_add_nothing_until_measured():
         added: list = []
         import asyncio
 
-        asyncio.run(
-            module.async_setup_entry(MagicMock(), entry, lambda e: added.extend(e))
-        )
+        asyncio.run(module.async_setup_entry(MagicMock(), entry, lambda e: added.extend(e)))
         assert added == []

@@ -151,7 +151,7 @@ def test_build_read_dps_and_restart():
     """Test READ_DPS and RESTART frames."""
     dev = _make_dev(idv="1CFE", is_legacy=False)
     assert build_read_dps(dev).hex() == "2b7ac7"  # 43 = 0x2b
-    assert build_restart(dev).hex() == "117ac7"   # 17 = 0x11
+    assert build_restart(dev).hex() == "117ac7"  # 17 = 0x11
     assert build_manu_reset(dev).hex() == "2f7ac7"  # 47 = 0x2f
 
     dev_legacy = _make_dev(idv="1CFE", is_legacy=True)
@@ -247,6 +247,7 @@ def test_parse_response_legacy_bodies_are_not_decoded():
         assert resp.dps == {}
         # The undecoded body is still available to the caller.
         assert resp.data == body
+
 
 def test_parse_response_errors_and_edge_cases():
     """Test error status codes and invalid lengths."""

@@ -144,10 +144,7 @@ def parse_advertisement(service_info: Any) -> MiniBigDeviceInfo | None:
 
         # Check legacy PushMini condition
         is_legacy = (d_type == 1) and (
-            rev == 0
-            or (rev == 1 and fv <= 9)
-            or (rev == 2 and fv <= 5)
-            or (rev == 3 and fv <= 5)
+            rev == 0 or (rev == 1 and fv <= 9) or (rev == 2 and fv <= 5) or (rev == 3 and fv <= 5)
         )
 
         return MiniBigDeviceInfo(
@@ -166,5 +163,5 @@ def parse_advertisement(service_info: Any) -> MiniBigDeviceInfo | None:
             rssi=rssi,
         )
     except (IndexError, ValueError, TypeError) as err:
-        _LOGGER.debug("Failed parsing MiniBig advertisement for %s: %s", address, err)
+        _LOGGER.debug("Failed parsing MiniBig advertisement for %s: %s", "[redacted]", type(err).__name__)
         return None

@@ -46,9 +46,7 @@ async def async_setup_entry(
         # setting stays unexposed rather than guessing a value to write.
         if dp_id is None or not options:
             continue
-        entities.append(
-            MiniBigChoiceSelect(entry, data.active_coordinator, slot, dp_id, options)
-        )
+        entities.append(MiniBigChoiceSelect(entry, data.active_coordinator, slot, dp_id, options))
 
     async_add_entities(entities)
 
@@ -102,7 +100,7 @@ class MiniBigChoiceSelect(CoordinatorEntity[MiniBigActiveCoordinator], SelectEnt
                 raw,
                 self._dp_id,
                 self._slot,
-                self.entry.unique_id,
+                "[redacted]",
             )
         super()._handle_coordinator_update()
 
@@ -116,6 +114,4 @@ class MiniBigChoiceSelect(CoordinatorEntity[MiniBigActiveCoordinator], SelectEnt
         except MiniBigSupersededError:
             return
         except Exception as err:
-            raise HomeAssistantError(
-                f"Failed to set {self._slot} to '{option}': {err}"
-            ) from err
+            raise HomeAssistantError(f"Failed to set {self._slot} to '{option}': {err}") from err

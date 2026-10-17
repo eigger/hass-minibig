@@ -19,8 +19,8 @@ from custom_components.minibig.minibig_ble.client import (
     MiniBigTimeoutError,
 )
 from custom_components.minibig.minibig_ble.const import Opcode, StatusCode
-from tests.fake_transport import FakeBleakClient
-from tests.test_client import _make_dev
+from tests.components.minibig.fake_transport import FakeBleakClient
+from tests.components.minibig.test_client import _make_dev
 
 ACK = bytes.fromhex("2afd000064")
 

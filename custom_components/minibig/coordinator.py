@@ -31,9 +31,7 @@ if TYPE_CHECKING:
 _LOGGER = logging.getLogger(__name__)
 
 
-class MiniBigPassiveBluetoothProcessorCoordinator(
-    PassiveBluetoothProcessorCoordinator[MiniBigDeviceInfo]
-):
+class MiniBigPassiveBluetoothProcessorCoordinator(PassiveBluetoothProcessorCoordinator[MiniBigDeviceInfo]):
     """Coordinator that processes BLE advertisements in ACTIVE scanning mode."""
 
     def __init__(
@@ -66,9 +64,7 @@ class MiniBigPassiveBluetoothProcessorCoordinator(
         return self._last_device_info
 
     @callback
-    def async_add_listener(
-        self, update_callback: Callable[[], None], context: Any = None
-    ) -> Callable[[], None]:
+    def async_add_listener(self, update_callback: Callable[[], None], context: Any = None) -> Callable[[], None]:
         """Listen for advertisement-derived data updates.
 
         PassiveBluetoothProcessorCoordinator has no built-in per-entity
@@ -158,7 +154,7 @@ class MiniBigActiveCoordinator(DataUpdateCoordinator[dict[int, int]]):
                     "Received unhandled/unknown DP %d with value %d from %s",
                     dp_id,
                     val,
-                    self.entry.unique_id,
+                    "[redacted]",
                 )
 
     def _handle_device_report(self, resp: Any) -> None:
@@ -170,10 +166,10 @@ class MiniBigActiveCoordinator(DataUpdateCoordinator[dict[int, int]]):
 
     async def _async_update_data(self) -> dict[int, int]:
         """Perform active poll over BLE GATT."""
-        _LOGGER.debug("_async_update_data called for %s", self.entry.unique_id)
+        _LOGGER.debug("_async_update_data called for %s", "[redacted]")
         # Skip polling while device is moving
         if self.connection.is_moving:
-            _LOGGER.debug("Skipping poll for %s: device is currently moving", self.entry.unique_id)
+            _LOGGER.debug("Skipping poll for %s: device is currently moving", "[redacted]")
             return self.data or {}
 
         try:
@@ -194,7 +190,7 @@ class MiniBigActiveCoordinator(DataUpdateCoordinator[dict[int, int]]):
                 self.data = {**self.data, **resp.dps}
                 return self.data
         except Exception as err:
-            _LOGGER.warning("Active polling failed for %s: %s", self.entry.unique_id, err)
+            _LOGGER.warning("Active polling failed for %s: %s", "[redacted]", type(err).__name__)
 
         return self.data or {}
 

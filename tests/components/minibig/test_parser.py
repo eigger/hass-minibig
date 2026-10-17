@@ -29,13 +29,22 @@ def test_parse_valid_window_opener():
     """Test parsing a valid window opener advertisement."""
     # manu: cid=0x1234, byte2=(rev=0, fv=1, initMode=0)=0x02, [3..8], idv="1CFE", [11..12], d_type=0
     # raw_manu byte[0..1]=34 12, byte[2]=0x02, byte[9..10]=1C FE, byte[13]=0x00
-    payload = bytes([
-        0x02,  # [2] flags: init_mode=0, fv=1, rev=0
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  # [3..8]
-        0x1C, 0xFE,  # [9..10] IDV
-        0x00, 0x00,  # [11..12]
-        0x00,  # [13] d_type
-    ])
+    payload = bytes(
+        [
+            0x02,  # [2] flags: init_mode=0, fv=1, rev=0
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,  # [3..8]
+            0x1C,
+            0xFE,  # [9..10] IDV
+            0x00,
+            0x00,  # [11..12]
+            0x00,  # [13] d_type
+        ]
+    )
     service_info = FakeServiceInfo(
         address="11:22:33:44:55:66",
         name="MiniBig Opener",
@@ -62,13 +71,22 @@ def test_parse_pushmini_modern():
     """Test parsing a modern PushMini advertisement."""
     # d_type=1, rev=2, fv=10 (legacy is rev==2 and fv<=5 -> not legacy)
     # byte2: (rev=2 << 6) | (fv=10 << 1) | initMode=1 -> (2<<6)|(10<<1)|1 = 0x80 | 0x14 | 0x01 = 0x95
-    payload = bytes([
-        0x95,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0xAF, 0xEA,  # IDV = AFEA
-        0x00, 0x00,
-        0x01,  # d_type = 1
-    ])
+    payload = bytes(
+        [
+            0x95,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0xAF,
+            0xEA,  # IDV = AFEA
+            0x00,
+            0x00,
+            0x01,  # d_type = 1
+        ]
+    )
     service_info = FakeServiceInfo(
         address="AA:BB:CC:11:22:33",
         name="PushMini",
@@ -91,13 +109,22 @@ def test_parse_pushmini_legacy():
     """Test parsing a legacy PushMini advertisement."""
     # d_type=1, rev=1, fv=5 -> legacy is True (rev==1 and fv<=9)
     # byte2: (1<<6) | (5<<1) | 0 = 0x40 | 0x0A = 0x4A
-    payload = bytes([
-        0x4A,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x12, 0x34,  # IDV = 1234
-        0x00, 0x00,
-        0x01,  # d_type = 1
-    ])
+    payload = bytes(
+        [
+            0x4A,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x12,
+            0x34,  # IDV = 1234
+            0x00,
+            0x00,
+            0x01,  # d_type = 1
+        ]
+    )
     service_info = FakeServiceInfo(
         address="AA:BB:CC:11:22:33",
         name="PushMini Old",
@@ -116,13 +143,22 @@ def test_parse_pushmini_legacy():
 
 def test_parse_clpm_name_override():
     """Test that local name containing 'clpm' forces d_type = 1."""
-    payload = bytes([
-        0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x99, 0x88,
-        0x00, 0x00,
-        0x05,  # d_type in manu is 5, but name has CLPM
-    ])
+    payload = bytes(
+        [
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x99,
+            0x88,
+            0x00,
+            0x00,
+            0x05,  # d_type in manu is 5, but name has CLPM
+        ]
+    )
     service_info = FakeServiceInfo(
         name="CLPM_Button",
         service_uuids=[DEVICE_SERVICE_UUID],
@@ -137,13 +173,22 @@ def test_parse_clpm_name_override():
 
 def test_parse_hubmini_unsupported():
     """Test parsing HubMini advertisement marks supported as False."""
-    payload = bytes([
-        0x02,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0xAA, 0xBB,
-        0x00, 0x00,
-        0x02,  # d_type = 2 (HubMini)
-    ])
+    payload = bytes(
+        [
+            0x02,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0xAA,
+            0xBB,
+            0x00,
+            0x00,
+            0x02,  # d_type = 2 (HubMini)
+        ]
+    )
     service_info = FakeServiceInfo(
         name="HubMini_Gate",
         service_uuids=[HUBMINI_SERVICE_UUID],
@@ -166,11 +211,13 @@ def test_parse_invalid_or_short_advertisement():
 
     # Too short manufacturer data without clpm name
     short_payload = bytes([0x01, 0x02])
-    info = parse_advertisement(FakeServiceInfo(
-        service_uuids=[DEVICE_SERVICE_UUID],
-        manufacturer_data={0x1234: short_payload},
-        name="Unknown",
-    ))
+    info = parse_advertisement(
+        FakeServiceInfo(
+            service_uuids=[DEVICE_SERVICE_UUID],
+            manufacturer_data={0x1234: short_payload},
+            name="Unknown",
+        )
+    )
     assert info is None
 
 
