@@ -131,7 +131,6 @@ class MiniBigConnection:
         # builder is injected (it needs hass for the radio facts); without
         # one a minimal report is filed so a failure is still counted.
         self.reports = SessionReports()
-        self._reports_listeners: list[Callable[[], None]] = []
         self.report_builder = report_builder
 
         self._client_override = client_override
@@ -383,32 +382,6 @@ class MiniBigConnection:
                 cb(resp)
             except Exception as err:
                 _LOGGER.error("Error in report callback: %s", err)
-
-    def add_reports_listener(self, listener: Callable[[], None]) -> Callable[[], None]:
-        """Call ``listener`` after a report is filed or the reports are cleared.
-
-        SessionReports notifies on record() but not on clear(), so the
-        connection fans out both itself instead of reaching into the library.
-        Returns the function that removes the listener.
-        """
-        self._reports_listeners.append(listener)
-        remove_filed = self.reports.add_listener(listener)
-
-        def remove() -> None:
-            remove_filed()
-            if listener in self._reports_listeners:
-                self._reports_listeners.remove(listener)
-
-        return remove
-
-    def clear_reports(self) -> None:
-        """Forget every recorded report and refresh whoever displays them."""
-        self.reports.clear()
-        for listener in list(self._reports_listeners):
-            try:
-                listener()
-            except Exception:  # noqa: BLE001 - one bad listener must not stop the rest
-                _LOGGER.exception("A session report listener raised")
 
     def _file_session(
         self,

@@ -30,7 +30,7 @@ Home Assistant custom integration to directly control **MiniBig** Bluetooth Low 
 - **Active Streaming Movement Tracking**: Uses `REPORT_DPS` (opcode 24) live push packets to track moving state smoothly without excessive polling.
 - **Command Coalescing**: Consecutive commands sent during connection setup or in-flight execution automatically overwrite older pending commands so only the latest intended state is dispatched to the motor.
 - **Slot Exhaustion Recovery**: Automatically handles stale connections and single-slot limitations with retry and recovery logic.
-- **Error Diagnostics**: Diagnostic sensors **Last Failure** (timestamp; its attributes show the failed stage, a likely cause, the radio/proxy used and per-stage timings), **Last Error** and **Error Count**, plus a **Clear Errors** button. Status polls that fail only because the device is out of range are not counted.
+- **Error Diagnostics**: Diagnostic sensors **Last Failure** (timestamp; its attributes show the failed stage, a likely cause, the radio/proxy used and per-stage timings and the error text), **Error Count** and **Connection Duration**. Status polls that fail only because the device is out of range are not counted.
 
 ---
 

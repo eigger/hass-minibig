@@ -296,88 +296,41 @@ def _sensor_entry(conn: MiniBigConnection):
 
 
 @pytest.mark.asyncio
-async def test_diagnostic_sensors_follow_the_reports_and_clear_button_resets_them():
+async def test_last_failure_sensor_follows_the_reports():
     from unittest.mock import MagicMock
 
-    from custom_components.minibig.button import MiniBigClearErrorsButton
-    from custom_components.minibig.sensor import (
-        MiniBigErrorCountSensor,
-        MiniBigLastErrorSensor,
-        MiniBigLastFailureSensor,
-    )
+    from custom_components.minibig.sensor import MiniBigErrorCountSensor, MiniBigLastFailureSensor
 
     client = FakeBleakClient()
     client.response_generator = lambda w: bytes([Opcode.PUB_DPS, StatusCode.DEVICE_BUSY, 0])
     conn = _conn(client)
-    entry = _sensor_entry(conn)
     coordinator = MagicMock()
     coordinator.last_update_success = False
+    sensor = MiniBigLastFailureSensor(_sensor_entry(conn), coordinator)
+    sensor.async_write_ha_state = MagicMock()
 
-    count = MiniBigErrorCountSensor(entry, coordinator)
-    last_error = MiniBigLastErrorSensor(entry, coordinator)
-    last_failure = MiniBigLastFailureSensor(entry, coordinator)
+    # Nothing failed yet; and it stays available while the coordinator is not.
+    assert sensor.native_value is None
+    assert sensor.extra_state_attributes is None
+    assert sensor.available is True
 
-    # Nothing failed yet; and they stay available while the coordinator is not.
-    assert count.native_value == 0
-    assert last_error.native_value is None
-    assert last_failure.native_value is None
-    assert last_failure.extra_state_attributes is None
-    assert count.available is last_error.available is last_failure.available is True
-
+    await sensor.async_added_to_hass()
     with pytest.raises(MiniBigDeviceError):
         await conn.send_dps([(0, 100)])
 
-    assert count.native_value == 1
-    assert "busy" in last_error.native_value.lower()
-    assert last_failure.native_value is not None
-    assert last_failure.extra_state_attributes["operation"] == OPERATION_COMMAND
-    assert count.extra_state_attributes is None
-
-    notified: list[int] = []
-    conn.add_reports_listener(lambda: notified.append(1))
-    await MiniBigClearErrorsButton(entry, coordinator).async_press()
-
-    assert notified == [1]
-    assert count.native_value == 0
-    assert last_error.native_value is None
-    assert last_failure.native_value is None
-    await conn.disconnect()
-
-
-def test_last_error_state_is_capped_to_255_characters():
-    from unittest.mock import MagicMock
-
-    from custom_components.minibig.sensor import MiniBigLastErrorSensor
-
-    conn = _conn(FakeBleakClient())
-    conn.reports.record({"operation": "command", "success": False, "error": "x" * 400})
-    sensor = MiniBigLastErrorSensor(_sensor_entry(conn), MagicMock())
-
-    assert len(sensor.native_value) == 255
-
-
-@pytest.mark.asyncio
-async def test_sensors_write_state_on_report_and_clear_and_stop_after_removal():
-    from unittest.mock import MagicMock
-
-    from custom_components.minibig.sensor import MiniBigErrorCountSensor
-
-    conn = _conn(FakeBleakClient())
-    sensor = MiniBigErrorCountSensor(_sensor_entry(conn), MagicMock())
-    sensor.async_write_ha_state = MagicMock()
-
-    await sensor.async_added_to_hass()
-    conn.reports.record({"operation": "command", "success": False, "error": "boom"})
+    assert sensor.native_value is not None
+    assert sensor.extra_state_attributes["operation"] == OPERATION_COMMAND
+    assert "busy" in sensor.extra_state_attributes["error"].lower()
     assert sensor.async_write_ha_state.call_count == 1
 
-    conn.clear_reports()
-    assert sensor.async_write_ha_state.call_count == 2
-    assert sensor.native_value == 0
+    count = MiniBigErrorCountSensor(_sensor_entry(conn), coordinator)
+    assert count.native_value == 1
+    assert count.extra_state_attributes is None
 
     await sensor.async_will_remove_from_hass()
     conn.reports.record({"operation": "command", "success": False, "error": "boom"})
-    conn.clear_reports()
-    assert sensor.async_write_ha_state.call_count == 2
+    assert sensor.async_write_ha_state.call_count == 1
+    await conn.disconnect()
 
 
 def _real_path_conn(**kwargs) -> MiniBigConnection:

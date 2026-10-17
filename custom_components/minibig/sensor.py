@@ -16,6 +16,7 @@ from homeassistant.const import (
     PERCENTAGE,
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
     EntityCategory,
+    UnitOfTime,
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import CONNECTION_BLUETOOTH, DeviceInfo
@@ -24,7 +25,6 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import MiniBigActiveCoordinator, MiniBigPassiveBluetoothProcessorCoordinator
-from .minibig_ble import STATUS_MESSAGES
 from .types import MiniBigConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
@@ -39,10 +39,9 @@ async def async_setup_entry(
     data = entry.runtime_data
     entities: list[SensorEntity] = [
         MiniBigRssiSensor(entry, data.passive_coordinator),
-        MiniBigLastStatusSensor(entry, data.active_coordinator),
         MiniBigLastFailureSensor(entry, data.active_coordinator),
-        MiniBigLastErrorSensor(entry, data.active_coordinator),
         MiniBigErrorCountSensor(entry, data.active_coordinator),
+        MiniBigConnectionDurationSensor(entry, data.active_coordinator),
     ]
 
     # Add battery sensor if supported by profile
@@ -140,28 +139,6 @@ class MiniBigRssiSensor(MiniBigBaseSensor):
         return None
 
 
-class MiniBigLastStatusSensor(MiniBigBaseSensor):
-    """Diagnostic sensor for last GATT response status."""
-
-    _attr_entity_category = EntityCategory.DIAGNOSTIC
-
-    def __init__(
-        self,
-        entry: MiniBigConfigEntry,
-        coordinator: MiniBigActiveCoordinator,
-    ) -> None:
-        """Initialize last status sensor."""
-        super().__init__(entry, coordinator, "last_status", "last_status")
-
-    @property
-    def native_value(self) -> str | None:
-        """Return last status text or code."""
-        status = self.entry.runtime_data.connection.last_status
-        if status is not None:
-            return STATUS_MESSAGES.get(status, f"Code {status}")
-        return None
-
-
 class MiniBigSessionReportSensor(MiniBigBaseSensor):
     """Base for diagnostics that publish the connection session reports.
 
@@ -196,7 +173,7 @@ class MiniBigSessionReportSensor(MiniBigBaseSensor):
     async def async_added_to_hass(self) -> None:
         """Refresh whenever a session report is filed."""
         await super().async_added_to_hass()
-        self._remove_report_listener = self.entry.runtime_data.connection.add_reports_listener(self._handle_report)
+        self._remove_report_listener = self.entry.runtime_data.connection.reports.add_listener(self._handle_report)
 
     async def async_will_remove_from_hass(self) -> None:
         """Stop listening for session reports."""
@@ -235,31 +212,10 @@ class MiniBigLastFailureSensor(MiniBigSessionReportSensor):
         return self._reports.last_failure_at
 
 
-class MiniBigLastErrorSensor(MiniBigSessionReportSensor):
-    """The text of the last BLE command failure."""
-
-    # Home Assistant caps a state at 255 characters.
-    MAX_LENGTH = 255
-
-    def __init__(self, entry: MiniBigConfigEntry, coordinator: MiniBigActiveCoordinator) -> None:
-        """Initialize last error sensor."""
-        super().__init__(entry, coordinator, "last_error")
-
-    @property
-    def native_value(self) -> str | None:
-        """Return the last error message, shortened to fit a state."""
-        failure = self._reports.last_failure
-        if not failure:
-            return None
-        error = str(failure.get("error") or "")
-        return error[: self.MAX_LENGTH] or None
-
-
 class MiniBigErrorCountSensor(MiniBigSessionReportSensor):
     """How many BLE commands have failed since this entry was loaded.
 
-    Starts over on every reload or when the clear button is pressed, so it is
-    not a long-term statistic.
+    Starts over on every reload, so it is not a long-term statistic.
     """
 
     def __init__(self, entry: MiniBigConfigEntry, coordinator: MiniBigActiveCoordinator) -> None:
@@ -275,3 +231,40 @@ class MiniBigErrorCountSensor(MiniBigSessionReportSensor):
     def extra_state_attributes(self) -> dict[str, Any] | None:
         """The count carries no breakdown; Last Failure does."""
         return None
+
+
+class MiniBigConnectionDurationSensor(MiniBigSessionReportSensor):
+    """How long the last new BLE connection took to establish.
+
+    Commands that reuse the live link have no connect stage and leave the
+    value alone; the attributes carry the breakdown of that connecting session.
+    """
+
+    _attr_device_class = SensorDeviceClass.DURATION
+    _attr_native_unit_of_measurement = UnitOfTime.SECONDS
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_suggested_display_precision = 1
+
+    def __init__(self, entry: MiniBigConfigEntry, coordinator: MiniBigActiveCoordinator) -> None:
+        """Initialize connection duration sensor."""
+        super().__init__(entry, coordinator, "connection_duration")
+        self._connect_report: dict[str, Any] | None = None
+
+    @callback
+    def _handle_report(self) -> None:
+        """Remember the latest session that actually connected."""
+        report = self._reports.last
+        if report and report.get("connect_s") is not None:
+            self._connect_report = report
+        super()._handle_report()
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the connect time in seconds."""
+        report = self._connect_report
+        return report.get("connect_s") if report else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return the breakdown of the session that last connected."""
+        return self._connect_report
