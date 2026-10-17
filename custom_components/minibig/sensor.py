@@ -236,8 +236,9 @@ class MiniBigErrorCountSensor(MiniBigSessionReportSensor):
 class MiniBigConnectionDurationSensor(MiniBigSessionReportSensor):
     """How long the last new BLE connection took to establish.
 
-    Commands that reuse the live link have no connect stage and leave the
-    value alone; the attributes carry the breakdown of that connecting session.
+    Only sessions that opened a new link and succeeded count: a reused link
+    has no connect stage and a failed one is Last Failure's business. Status
+    polls are not filed, so only commands move this.
     """
 
     _attr_device_class = SensorDeviceClass.DURATION
@@ -254,7 +255,7 @@ class MiniBigConnectionDurationSensor(MiniBigSessionReportSensor):
     def _handle_report(self) -> None:
         """Remember the latest session that actually connected."""
         report = self._reports.last
-        if report and report.get("connect_s") is not None:
+        if report and report.get("success") and report.get("connect_s") is not None:
             self._connect_report = report
         super()._handle_report()
 

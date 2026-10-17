@@ -333,6 +333,32 @@ async def test_last_failure_sensor_follows_the_reports():
     await conn.disconnect()
 
 
+@pytest.mark.asyncio
+async def test_connection_duration_keeps_the_last_successful_new_connection():
+    from unittest.mock import MagicMock
+
+    from custom_components.minibig.sensor import MiniBigConnectionDurationSensor
+
+    conn = _conn(FakeBleakClient())
+    sensor = MiniBigConnectionDurationSensor(_sensor_entry(conn), MagicMock())
+    sensor.async_write_ha_state = MagicMock()
+    await sensor.async_added_to_hass()
+    assert sensor.native_value is None
+
+    # A failed attempt that timed the connect stage is not a connection time.
+    conn.reports.record({"operation": "command", "success": False, "connect_s": 9.0})
+    assert sensor.native_value is None
+
+    conn.reports.record({"operation": "command", "success": True, "connect_s": 0.0})
+    assert sensor.native_value == 0.0
+    assert sensor.extra_state_attributes["connect_s"] == 0.0
+
+    # A reused link has no connect stage: the value stays.
+    conn.reports.record({"operation": "command", "success": True, "reused": True})
+    assert sensor.native_value == 0.0
+    await sensor.async_will_remove_from_hass()
+
+
 def _real_path_conn(**kwargs) -> MiniBigConnection:
     """A connection that goes through ble_session (no client_override)."""
     from unittest.mock import MagicMock

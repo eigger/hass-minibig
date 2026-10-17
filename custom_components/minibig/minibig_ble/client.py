@@ -166,7 +166,6 @@ class MiniBigConnection:
         self._background_tasks: set[asyncio.Task[Any]] = set()
 
         self._is_moving: bool = False
-        self._last_status: int | None = None
         self._is_notifying: bool = False
         # Last connection state pushed to callbacks, so repeated connect() /
         # disconnect() calls that do not actually change the link state stay
@@ -220,11 +219,6 @@ class MiniBigConnection:
     def is_moving(self) -> bool:
         """Return True if cover/device is actively moving."""
         return self._is_moving
-
-    @property
-    def last_status(self) -> int | None:
-        """Return last received status code."""
-        return self._last_status
 
     def register_report_callback(self, callback: Callable[[Response], None]) -> Callable[[], None]:
         """Register callback for status updates and return unregister function."""
@@ -350,7 +344,6 @@ class MiniBigConnection:
         self._touch()
 
         resp = parse_response(raw)
-        self._last_status = resp.status
 
         if resp.dps:
             _LOGGER.debug("Parsed %d DP(s) from %s: %s", len(resp.dps), self.device_info.address, resp.dps)

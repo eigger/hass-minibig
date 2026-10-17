@@ -10,6 +10,7 @@ from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.typing import ConfigType
 
 from .const import (
@@ -55,6 +56,14 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the MiniBig integration (registers services)."""
     await async_setup_services(hass)
     return True
+
+
+# (platform, unique-id key) of entities that earlier versions created.
+_REMOVED_ENTITIES = (
+    ("sensor", "last_status"),
+    ("sensor", "last_error"),
+    ("button", "clear_errors"),
+)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: MiniBigConfigEntry) -> bool:
@@ -210,6 +219,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: MiniBigConfigEntry) -> b
     await active_coordinator.async_refresh()
 
     # Forward entry setups to platforms
+    # Entities dropped from the integration would otherwise linger as
+    # "no longer provided" until the user deletes them by hand.
+    ent_reg = er.async_get(hass)
+    for platform, key in _REMOVED_ENTITIES:
+        if entity_id := ent_reg.async_get_entity_id(platform, DOMAIN, f"{entry.unique_id}_{key}"):
+            ent_reg.async_remove(entity_id)
+
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     return True
