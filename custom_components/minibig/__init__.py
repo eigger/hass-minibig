@@ -66,6 +66,15 @@ _REMOVED_ENTITIES = (
 )
 
 
+@callback
+def _async_remove_stale_entities(hass: HomeAssistant, entry: MiniBigConfigEntry) -> None:
+    """Drop entities earlier versions created, so they do not linger as unavailable."""
+    ent_reg = er.async_get(hass)
+    for platform, key in _REMOVED_ENTITIES:
+        if entity_id := ent_reg.async_get_entity_id(platform, DOMAIN, f"{entry.unique_id}_{key}"):
+            ent_reg.async_remove(entity_id)
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: MiniBigConfigEntry) -> bool:
     """Set up MiniBig from a config entry."""
     address: str = entry.data[CONF_ADDRESS]
@@ -218,12 +227,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: MiniBigConfigEntry) -> b
     # elsewhere in this integration (see MiniBigActiveCoordinator).
     await active_coordinator.async_refresh()
 
-    # Entities dropped from the integration would otherwise linger as
-    # "no longer provided" until the user deletes them by hand.
-    ent_reg = er.async_get(hass)
-    for platform, key in _REMOVED_ENTITIES:
-        if entity_id := ent_reg.async_get_entity_id(platform, DOMAIN, f"{entry.unique_id}_{key}"):
-            ent_reg.async_remove(entity_id)
+    _async_remove_stale_entities(hass, entry)
 
     # Forward entry setups to platforms
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)

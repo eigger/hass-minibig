@@ -673,3 +673,20 @@ async def test_link_info_is_stored_on_connect_reused_and_cleared_on_disconnect()
 
     await conn.disconnect()
     assert conn._link is None
+
+
+def test_removed_entities_are_dropped_from_the_registry():
+    from unittest.mock import MagicMock, patch
+
+    from custom_components.minibig import _async_remove_stale_entities
+
+    registry = MagicMock()
+    registry.async_get_entity_id.side_effect = lambda platform, domain, uid: f"{platform}.{uid}"
+    entry = MagicMock()
+    entry.unique_id = "AA:BB"
+
+    with patch("custom_components.minibig.er.async_get", return_value=registry):
+        _async_remove_stale_entities(MagicMock(), entry)
+
+    removed = {c.args[0] for c in registry.async_remove.call_args_list}
+    assert removed == {"sensor.AA:BB_last_status", "sensor.AA:BB_last_error", "button.AA:BB_clear_errors"}
