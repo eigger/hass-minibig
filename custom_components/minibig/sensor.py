@@ -247,16 +247,19 @@ class MiniBigConnectionDurationSensor(MiniBigSessionReportSensor):
     _unrecorded_attributes = frozenset(
         {
             "via",
+            "via_type",
             "rssi",
             "paths",
+            "advertised_via",
+            "via_unconfirmed",
             "connect_s",
-            "total_s",
-            "transfer_s",
-            "session_s",
-            "disconnect_s",
-            "finish_s",
-            "auth_s",
-            "unreachable_s",
+            "recovery_wait_s",
+            "subscribe_s",
+            "write_s",
+            "response_s",
+            "first_failed_stage",
+            "connect_recovered",
+            "stale_close_error",
         }
     )
 
