@@ -1,18 +1,20 @@
+<!-- hass-standards:header:start -->
 # MiniBig BLE for Home Assistant
 
-<!-- hass-standards:badges:start -->
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5?style=flat-square)](#설치)
-[![Release](https://img.shields.io/github/v/release/eigger/hass-minibig?style=flat-square)](https://github.com/eigger/hass-minibig/releases)
-[![Home Assistant minimum](https://img.shields.io/badge/HA-%E2%89%A5%202025.8.0-41BDF5?style=flat-square)](hacs.json)
-[![Tests](https://img.shields.io/github/actions/workflow/status/eigger/hass-minibig/tests.yml?branch=main&style=flat-square&label=Tests)](https://github.com/eigger/hass-minibig/actions/workflows/tests.yml)
-[![Validate](https://img.shields.io/github/actions/workflow/status/eigger/hass-minibig/validate.yml?branch=main&style=flat-square&label=Validate)](https://github.com/eigger/hass-minibig/actions/workflows/validate.yml)
-[![License](https://img.shields.io/github/license/eigger/hass-minibig?style=flat-square)](LICENSE)
-[![Analytics reporting installs](https://img.shields.io/badge/dynamic/json?style=flat-square&color=41BDF5&label=Usage&query=%24.minibig.total&url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json)](https://analytics.home-assistant.io/)
-<!-- hass-standards:badges:end -->
+MiniBig 창문 오프너와 PushMini/SwitchMini를 클라우드 계정·HubMini 없이 로컬 Bluetooth GATT로 제어하는 HACS 커스텀 통합입니다.
 
 [English](README.md) | **한국어**
 
-MiniBig 창문 오프너와 PushMini/SwitchMini를 클라우드 계정·HubMini 없이 로컬 Bluetooth GATT로 제어하는 HACS 커스텀 통합입니다.
+<!-- hass-standards:badges:start -->
+[![Release](https://img.shields.io/github/v/release/eigger/hass-minibig?style=flat)](https://github.com/eigger/hass-minibig/releases)
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5?style=flat)](#설치)
+[![Home Assistant minimum](https://img.shields.io/badge/HA-%E2%89%A5%202025.8.0-41BDF5?style=flat)](hacs.json)
+[![Tests](https://img.shields.io/github/actions/workflow/status/eigger/hass-minibig/tests.yml?branch=main&style=flat&label=Tests)](https://github.com/eigger/hass-minibig/actions/workflows/tests.yml)
+[![Validate](https://img.shields.io/github/actions/workflow/status/eigger/hass-minibig/validate.yml?branch=main&style=flat&label=Validate)](https://github.com/eigger/hass-minibig/actions/workflows/validate.yml)
+[![License](https://img.shields.io/github/license/eigger/hass-minibig?style=flat)](LICENSE)
+[![Analytics reporting installs](https://img.shields.io/badge/dynamic/json?style=flat&color=41BDF5&label=Usage&query=%24.minibig.total&url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json)](https://analytics.home-assistant.io/)
+<!-- hass-standards:badges:end -->
+<!-- hass-standards:header:end -->
 
 ## 기기와 기능
 
@@ -26,7 +28,7 @@ MiniBig 창문 오프너와 PushMini/SwitchMini를 클라우드 계정·HubMini 
 
 Home Assistant **2025.8.0 이상**, 기기 범위 안의 연결 가능한 Bluetooth 어댑터/프록시가 필요합니다. `blesession`은 HA가 자동 설치합니다. 최초 설치 유형·방향·이동 한계 캘리브레이션은 공식 앱에서 마치고, HA 제어 전 앱 연결을 해제하세요.
 
-프록시 설정·추천 기기는 [Bluetooth 프록시 설정](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.ko.md)을 따릅니다. 광고 스캔과 active GATT 연결은 다른 조건입니다.
+프록시 설정·추천 기기는 [Bluetooth 프록시 설정](https://github.com/eigger/blesession/blob/main/docs/bluetooth.ko.md)을 따릅니다. 광고 스캔과 active GATT 연결은 다른 조건입니다.
 
 ## 설치
 
@@ -49,8 +51,20 @@ Home Assistant **2025.8.0 이상**, 기기 범위 안의 연결 가능한 Blueto
 - [개발·실제 HA 테스트·의존성](docs/development.md)
 - [공통 규칙·검증 기록](STANDARDS.md)
 
-## 지원·라이선스
+주소·기기 ID·raw 이벤트 payload·민감한 물리 상태는 로그 공개 전에 제거하세요.
 
-버그는 [Issues](https://github.com/eigger/hass-minibig/issues), 질문·제안은 [Discussions](https://github.com/eigger/hass-minibig/discussions)를 이용하세요. 주소·기기 ID·raw 이벤트 payload·민감한 물리 상태는 로그 공개 전에 제거하세요.
+<!-- hass-standards:support:start -->
+## 지원
 
-[MIT License](LICENSE)를 따릅니다.
+- [Issues](https://github.com/eigger/hass-minibig/issues): 버그를 신고하거나 기능을 요청하세요.
+- [Discussions](https://github.com/eigger/hass-minibig/discussions): 질문하고 사용 경험을 공유하세요.
+<!-- hass-standards:support:end -->
+
+<!-- hass-standards:related-projects:start -->
+<!-- hass-standards:related-projects:end -->
+
+<!-- hass-standards:license:start -->
+## 라이선스
+
+[MIT License](LICENSE) 라이선스로 배포됩니다.
+<!-- hass-standards:license:end -->

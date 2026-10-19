@@ -157,10 +157,10 @@ class MiniBigConfigFlow(ConfigFlow, domain=DOMAIN):
         config_entry: ConfigEntry,
     ) -> OptionsFlowWithReload:
         """Get the options flow for this handler."""
-        return MiniBigOptionsFlowHandler()
+        return MiniBigOptionsFlow()
 
 
-class MiniBigOptionsFlowHandler(OptionsFlowWithReload):
+class MiniBigOptionsFlow(OptionsFlowWithReload):
     """Handle MiniBig options flow."""
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:

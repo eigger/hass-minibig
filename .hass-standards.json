@@ -13,6 +13,21 @@
   "validate_workflow": "validate.yml",
   "installation_links": {
     "README.md": "#installation",
-    "README.ko.md": "#\uc124\uce58"
+    "README.ko.md": "#설치"
+  },
+  "readme": {
+    "title": "MiniBig BLE for Home Assistant",
+    "descriptions": {
+      "en": "A HACS custom integration for local Bluetooth GATT control of MiniBig window openers and PushMini/SwitchMini devices, without a cloud account or HubMini.",
+      "ko": "MiniBig 창문 오프너와 PushMini/SwitchMini를 클라우드 계정·HubMini 없이 로컬 Bluetooth GATT로 제어하는 HACS 커스텀 통합입니다."
+    },
+    "issues": true,
+    "discussions": true,
+    "license_name": "MIT License",
+    "license_notices": {
+      "en": [],
+      "ko": []
+    },
+    "related_projects": []
   }
 }

@@ -1,0 +1,37 @@
+name: Scheduled tests
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 4 * * 1"
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  current:
+    uses: eigger/hass-repo-standards/.github/workflows/python-tests.yml@0bfb572cbe49b92b3dbc559382c00bd0eb2cbd44 # reviewed standards commit
+    with:
+      standards-ref: 0bfb572cbe49b92b3dbc559382c00bd0eb2cbd44
+      domain: minibig
+      python-versions: '["3.14"]'
+      lint-python-version: '3.14'
+      requirements: requirements_test.txt
+      expected-ha-version: '2026.10.2'
+      test-profile: ha
+      ha-components: 'bluetooth sensor binary_sensor button switch cover select number'
+      dependency-modes: '["current", "minimum"]'
+      minimum-packages: '["blesession"]'
+  minimum-ha:
+    uses: eigger/hass-repo-standards/.github/workflows/python-tests.yml@0bfb572cbe49b92b3dbc559382c00bd0eb2cbd44 # reviewed standards commit
+    with:
+      standards-ref: 0bfb572cbe49b92b3dbc559382c00bd0eb2cbd44
+      domain: minibig
+      python-versions: '["3.13"]'
+      lint-python-version: '3.14'
+      requirements: requirements_test_min.txt
+      expected-ha-version: '2025.8.0'
+      test-profile: ha
+      ha-components: 'bluetooth sensor binary_sensor button switch cover select number'
+      dependency-modes: '["current", "minimum"]'
+      minimum-packages: '["blesession"]'

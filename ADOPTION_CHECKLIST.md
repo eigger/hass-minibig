@@ -1,5 +1,54 @@
 # 공통 규칙 적용 체크리스트
 
+## 2026-10-19 후속 재검토
+
+이 절이 현재 작업의 판정입니다. 아래 2026-10-17 기록은 과거 게시 커밋의 이력으로 보존하며 현재 트리의 검증 결과와 구분합니다.
+
+| 항목 | 현재 확인 내용 |
+|---|---|
+| 대상 / 시작 커밋 | `eigger/hass-minibig` / `main` / `04a425c1b2071ceb705b06fdf1d956daedcdaaf4` 후속 채택 PR 작업 트리 |
+| 검토한 표준 | `0bfb572cbe49b92b3dbc559382c00bd0eb2cbd44` — 2026-10-19 `git ls-remote ... refs/heads/main` 확인 |
+| 이전 기준 | `b1c80cf2c4bf8b4bc4e3556409ad948b7f850ea0` |
+| 담당 | 조율 root / 구현 implementation / 독립 리뷰 review |
+| 적용 profile | integration / ha, `tests/components/minibig/` |
+| 지원 정책 | `hacs.json` HA2025.8.0·manifest 통합0.3.0·blesession>=0.9.0 유지, requirements 변경 없음 |
+| 원격 메타데이터 | GitHub API: 기본 main, Issues/Discussions 활성, MIT, 최신 Release v0.3.0, rulesets=[], branch protection404 |
+| 중앙 현황 | 중앙 로컬 `docs/adoption-status.md`의 MiniBig 행만 로컬 적용·검증 완료/게시 대기로 갱신. commit/push 미수행으로 원격 현황 미반영 |
+| 판정 | 로컬 적용·독립 리뷰·최소/current HA×라이브러리 네 환경 검증 완료. 사용자 후속 요청으로 채택 PR 게시 단계이며 원격 Tests/Validate 결과 대기이므로 전체 채택은 진행 중 |
+
+| 규칙 | 상태 | 이번 변경과 근거 |
+|---|---|---|
+| GOV-01, GOV-02 | PASS | STANDARDS 현재 참조 필드·모든 workflow/action·standards-ref를 같은 공개 전체 SHA로 고정. 이전 검증은 역사적 절로 분리 |
+| GOV-03, GOV-04 | TODO | 사용자 요청에 따른 로컬 재검토·영향 기록과 중앙 로컬 자기 행 갱신 완료. 사용자 후속 요청으로 브랜치 커밋·푸시·채택 PR 게시를 진행하며 정확한 새 SHA 원격 CI·중앙 원격 보고는 후속 확인 |
+| GOV-05 | PASS | 구현/독립 리뷰 담당 분리. 독립 DOC-07 지적을 보완한 뒤 영한 문서·실제 코드 의미·중앙 검사·현재 HA 전체 테스트 재검증 통과. 최소 HA 실행은 별도 항목에 기록 |
+| DOC-01~06 | PASS | 중앙 렌더러의 영한 header/support/related-projects/license, flat 배지 적용. 기존 Devices~Documentation 본문은 공통 안내 URL 교체 외 동일; 독립 의미 리뷰 별도 |
+| DOC-07 | PASS | blesession 영한 사용자 원본 링크·고정 H2·증상 표·기존 기기 안내 보존. 독립 리뷰의 세션 오류/완료 확인/연결 경로 설명을 보완한 뒤 양언어와 실제 client/session_report 의미 재검증 통과 |
+| TEST-01~09, HA-11 | PASS | 정확한 중앙 루트 conftest·빈 init·domain 관리 블록/fixture alias·플랫폼별 실제 HA 테스트 적용. 기존 테스트 함수105개 AST 보존, select 미지원 enum 회귀 1개 추가. 최소/current HA×라이브러리 네 환경 각107passed·skip0·pip check 및 독립 양 HA 재실행 통과 |
+| CI-01~08, CI-12 | PASS | 공통 caller·standards 검사 job·SHA/standards-ref 적용. 기존 Tests 주간 실행은 scheduled_tests.yml에서 같은 current/minimum HA×라이브러리 matrix로 보존. actionlint 정적 검증 통과 |
+| DEP, HA 지원 하한 | PASS | manifest/hacs/requirements 원본 유지. 최소 HA와 라이브러리 정확한 하한 검증을 분리하며 하한 상향 없음 |
+| DOC-08 | N/A | imagespec requirement/import 및 payload 렌더링 기능 없음 |
+| HACS/Hassfest, 원격 CI | TODO | 이번 채택 PR의 새 SHA 원격 validator 결과 대기. 과거 성공 링크를 현재 PASS 근거로 쓰지 않음 |
+| 실물/UI | 미검증 | 실물 MiniBig·새 proxy 보드·HA frontend UI 검증은 수행하지 않음 |
+
+### 이번 실행 근거
+
+- 표준 검사: `python -X utf8 <central>/scripts/check_integration.py . --check` 종료0. Windows 기본 cp949 대신 UTF-8로 실행합니다.
+- `python -m ruff check .`, `python -m ruff format --check .`: 통과, 56 files. `git diff --check`: 통과.
+- `actionlint 1.7.12 -shellcheck= -pyflakes=`: 모든 로컬 workflow 통과. shellcheck/pyflakes는 환경에 없어 별도 연동 미실행.
+- `check_repository.py`는 공개 중앙 checkout 자체의 README 템플릿에서 `Header contains non-template content; migrate manually without loss`로 종료1입니다. 현재 통합의 `check_integration.py` 성공과 구분하며 중앙 원본은 수정하지 않았습니다. 기본 인코딩 실행의 cp949 오류를 확인한 뒤 `-X utf8`로 재실행한 실제 결과입니다.
+- 현재 HA: WSL Ubuntu / Python3.14.7 / HA2026.10.2 / plugin0.13.373 / blesession0.9.0 / pycares5.2.0. 중앙 installer `INPUT_DEPENDENCY_MODE=current` 후 `python -m pytest tests/components/minibig/ -q`: **107 passed in 31.71s**, `pip check` 통과. 로그 `/tmp/minibig-current-pytest.log`, 환경 `/tmp/minibig-current-20261019`.
+- 현재 HA × 라이브러리 정확한 하한: 별도 환경 `/tmp/minibig-current-minimum-20261019`, 같은 Python/HA/plugin/pycares 조합, 중앙 installer `INPUT_DEPENDENCY_MODE=minimum`, `INPUT_MINIMUM_PACKAGES='["blesession"]'`로 실제 blesession0.9.0 확인. **107 passed in 31.21s**, `pip check` 통과. 로그 `/tmp/minibig-current-minimum-install-20261019.log`, `/tmp/minibig-current-minimum-pytest-20261019.log`. current resolver 결과와 실제 설치값이 같아도 두 모드를 별도 환경에서 실행했습니다.
+- 독립 현재 HA 재검증: review 담당이 전체 suite를 별도로 실행하여 **107 passed in 31.25s**, skip0·`pip check` 통과. 로그 `/tmp/minibig-independent-current-20261019.log`. 같은 환경에서 패키지 재설치 없이 실행했으며 중앙 통합 검사도 독립 종료0. 기존 테스트 함수105개 모두 AST 동일(누락0·수정0), 신규1개·총107cases 확인. 양언어 DOC-07 오류 단계·보고 키·추정 경로 의미를 실제 구현과 대조한 뒤 지적 해소 확인.
+- 최소 HA × 라이브러리 정확한 하한(독립 review): `/tmp/minibig-review-min-20261019`, Python3.13.15 / HA2025.8.0 / plugin0.13.269 / blesession0.9.0 / pycares4.11.0. 중앙 installer minimum 모드로 정확한 하한 설치 후 **107 passed in 27.14s**, skip0·`pip check` 통과. 로그 `/tmp/minibig-independent-min-20261019.log`, 설치 `/tmp/minibig-review-min-install-zig4-20261019.log`.
+- 최소 HA × current 라이브러리(root): 별도 `/tmp/minibig-minimum-current-20261019`, 같은 Python/HA/plugin/pycares 조합에서 current resolver도 blesession0.9.0 선택. **107 passed in 26.86s**, skip0·`pip check` 통과. 로그 `/tmp/minibig-minimum-current-install.log`, `/tmp/minibig-minimum-current-pytest.log`.
+- 최소 HA 설치의 초기 실패는 WSL C 컴파일러 부재와 Zig의 Python 기본 linker 옵션 미지원이 원인이었습니다. 격리된 ziglang0.14.1의 CC와 `LDSHARED='...ziglang cc -shared'`로 ciso8601==2.3.2·lru-dict==1.3.0을 빌드한 뒤 중앙 installer가 성공했습니다. 시스템·리포·의존성 버전은 변경하지 않았으며 이후 환경도 같은 정확한 버전의 캐시 wheel을 사용했습니다.
+
+### 게시와 남은 작업
+
+승인 예외 및 독립 리뷰의 미해결 지적 없음. 로컬 적용·독립 검증 후 사용자 후속 요청에 따라 브랜치에 커밋·푸시하고 채택 PR로 제공합니다. PR 게시 후 정확한 SHA의 Tests/Validate 및 중앙 게시 현황을 별도로 확인해야 합니다. 중앙 원본 자체의 check_repository 실패는 위에 별도 기록했습니다.
+
+## 2026-10-17 최초 채택 기록 (역사적 근거)
+
 MiniBig 첫 채택의 실제 점검 기록입니다. 미완료 항목은 TODO로 유지합니다. [사용법과 판정 기준](https://github.com/eigger/hass-repo-standards/blob/b1c80cf2c4bf8b4bc4e3556409ad948b7f850ea0/docs/checklist.md)을 읽고, 아래 규칙은 `STANDARDS.md`에 기록한 표준 커밋에서 확인합니다. 태그·릴리스 대신 검토한 전체 커밋 SHA를 기준으로 합니다.
 
 ## 검토 대상
