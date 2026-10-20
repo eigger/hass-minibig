@@ -1,6 +1,6 @@
 # 사용·기기·옵션 상세
 
-[English](usage.md) · [한국어](usage.ko.md) · [README](../README.md)
+[English](usage.md) · [한국어](usage.ko.md) · [README](../README.ko.md)
 
 기존 안내를 보존한 상세 문서입니다. CLWM-B06 실물 결과는 기존 프로젝트 기록이며 이번 공통화의 새 실물 검증이 아닙니다. 최신 옵션·프로필 주의는 아래 보완 항목을 참고하세요.
 
@@ -33,10 +33,8 @@
 ### HACS를 통한 설치 (권장)
 
 1. Home Assistant에서 **HACS**를 엽니다.
-2. 우측 상단 메뉴(점 세 개) → **Custom repositories** 클릭.
-3. 저장소 URL `https://github.com/eigger/hass-minibig` 를 카테고리 **Integration**으로 추가.
-4. HACS에서 **MiniBig**을 검색하여 **Download** 클릭.
-5. Home Assistant를 재시작합니다.
+2. 기본 통합 목록에서 **MiniBig**을 검색하여 **Download**를 클릭합니다.
+3. Home Assistant를 재시작합니다.
 
 ### 요구 사항
 

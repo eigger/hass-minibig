@@ -7,7 +7,7 @@ A HACS custom integration for local Bluetooth GATT control of MiniBig window ope
 
 <!-- hass-standards:badges:start -->
 [![Release](https://img.shields.io/github/v/release/eigger/hass-minibig?style=flat)](https://github.com/eigger/hass-minibig/releases)
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5?style=flat)](#installation)
+[![HACS Default](https://img.shields.io/badge/HACS-Default-41BDF5?style=flat)](#installation)
 [![Home Assistant minimum](https://img.shields.io/badge/HA-%E2%89%A5%202025.8.0-41BDF5?style=flat)](hacs.json)
 [![Tests](https://img.shields.io/github/actions/workflow/status/eigger/hass-minibig/tests.yml?branch=main&style=flat&label=Tests)](https://github.com/eigger/hass-minibig/actions/workflows/tests.yml)
 [![Validate](https://img.shields.io/github/actions/workflow/status/eigger/hass-minibig/validate.yml?branch=main&style=flat&label=Validate)](https://github.com/eigger/hass-minibig/actions/workflows/validate.yml)
@@ -32,7 +32,7 @@ For proxy configuration and recommended hardware, use the [Bluetooth proxy setup
 
 ## Installation
 
-1. In HACS, add `https://github.com/eigger/hass-minibig` as a custom repository, category **Integration**.
+1. Open HACS and search for **MiniBig** in the default integration catalog.
 2. Download **MiniBig**, then restart Home Assistant. Alternatively copy `custom_components/minibig` into `<config_dir>/custom_components/` and restart.
 3. Power on the device nearby and configure the Bluetooth discovery notification, or add **MiniBig** under **Settings → Devices & services**.
 4. Use the created cover/switch controls. For example, send `cover.stop_cover` to the window entity from **Developer Tools → Actions** to stop movement.

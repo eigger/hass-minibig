@@ -1,8 +1,45 @@
 # 공통 규칙 적용 체크리스트
 
-## 2026-10-19 후속 재검토
+## 2026-10-20 후속 재검토
 
-이 절이 현재 작업의 판정입니다. 아래 2026-10-17 기록은 과거 게시 커밋의 이력으로 보존하며 현재 트리의 검증 결과와 구분합니다.
+이 절이 현재 판정입니다. 아래 2026-10-19·2026-10-17 기록은 당시의 검증·게시 상태를 보존합니다. 이전 절의 PR·원격 CI 대기 항목은 [PR #24](https://github.com/eigger/hass-minibig/pull/24)의 main 반영과 아래 정확한 SHA의 성공으로 해소되었습니다.
+
+| 항목 | 현재 확인 내용 |
+|---|---|
+| 대상 / 검토 커밋 | `eigger/hass-minibig` / 실제 기본 브랜치 `main` / `3c7235280a57871c119def4056bcdffe78d4fa4a`와 이번 문서 변경 작업 트리 |
+| 검토한 표준 | 공개 중앙 main `0bfb572cbe49b92b3dbc559382c00bd0eb2cbd44` — 2026-10-20 `git ls-remote ... refs/heads/main` 재확인, 기존 적용 SHA와 동일 |
+| 담당 | 조율 root / 구현 implementation / 독립 리뷰 review |
+| 변경 범위 | 재검토 기록·완료된 PR/CI 상태 현재화, HACS Default 설정·양언어 배지·README/사용 안내 설치 절차 수정. 구현·테스트·CI·requirements 변경 없음 |
+| 지원 정책 | HA2025.8.0·통합0.3.0·blesession>=0.9.0 유지. current Python3.14/HA2026.10.2/plugin0.13.373, minimum Python3.13/HA2025.8.0/plugin0.13.269 유지 |
+| 정확한 main SHA 원격 CI | [Tests39410376782](https://github.com/eigger/hass-minibig/actions/runs/39410376782) / [Validate39410376805](https://github.com/eigger/hass-minibig/actions/runs/39410376805) 성공. 이번 미게시 문서 작업 트리의 원격 실행 결과와 구분 |
+| 중앙 현황 | 조율자가 기존 중앙 checkout의 MiniBig 행만 로컬 갱신. 기존 미게시 중앙 커밋을 보존하여 원격 미게시 |
+| 판정 | 기존 기준의 main 반영 및 정확한 SHA 원격 CI 성공 확인. 이번 HACS 수정·재검토·독립 리뷰는 로컬 완료. 대상 문서 변경과 중앙 현황은 원격 미게시 |
+
+| 규칙 | 상태 | 이번 확인과 근거 |
+|---|---|---|
+| GOV-01, GOV-02 | PASS | 공개 중앙 기준과 현재 참조 SHA 일치. 중앙 검사기의 README·테스트 기반·공통 caller·전체 SHA 검사 종료0 |
+| GOV-03 | PASS | 기존 명시적 채택 PR #24 main 반영 확인. 중앙 기준·구현 변경이 없어 새 기능/지원 정책 이관 없음 |
+| GOV-04 | TODO | 시작·검증 단계의 중앙 자기 행 로컬 갱신 완료. 기존 중앙 checkout의 미게시 커밋을 보존하며 원격 보고는 미반영 |
+| GOV-05 | PASS | 구현 implementation과 별도 review 담당 분리. 정확한 main SHA 원격 로그·HACS 등재 근거·최종 diff 독립 검토 완료. 중앙 통합/배지 검사 재실행 종료0, 미해결 필수 지적 없음 |
+| DOC-01~07, TEST·CI 계약 | PASS | 기존 관리 영역·공용 CI·테스트 기반을 공개 SHA 중앙 검사기로 이번 작업 트리에서 검사. 이번 변경의 HACS 설치 안내 외 본문·구현·기존 테스트 그대로 보존 |
+| HACS/Hassfest, 실제 HA 원격 검증 | PASS | 정확한 검토 main SHA의 Tests/Validate 성공. review 담당이 설치값·107passed/skip0·pip check·HACS brands·Hassfest·중앙 템플릿 성공 로그 독립 확인 |
+| DEP·HA 지원 하한 | PASS | manifest/hacs/current·minimum requirements 및 양 HA×라이브러리 matrix 확인. 하한·연산자·버전 조합 변경 없음 |
+| DOC-08 | N/A | imagespec requirement/import 및 payload 렌더링 기능 없음 |
+| 실물/UI | 미검증 | 실물 MiniBig·새 proxy 보드·HA frontend UI 검증 수행 안 함 |
+
+### 이번 실행 근거와 남은 작업
+
+- 공개 SHA의 별도 checkout `/tmp/minibig-standards-20261020`에서 중앙 지침·채택/체크리스트·관련 규칙·템플릿 확인. 기존 중앙 작업 트리의 미게시 변경은 검사 기준으로 사용하지 않았습니다.
+- `python3 /tmp/minibig-standards-20261020/scripts/check_integration.py --help`로 실제 CLI 확인 후 `python3 /tmp/minibig-standards-20261020/scripts/check_integration.py . --check`: 종료0.
+- `ruff check .`: 통과. `ruff format --check .`: 56 files already formatted. `git diff --check`: 통과. 이번 문서 변경으로 실제 HA 테스트를 새로 실행했다고 기록하지 않으며, 위 정확한 main SHA 원격 실행 근거를 사용합니다.
+- 독립 원격 로그 검토: 정확한 main SHA의 네 matrix 모두 **107 passed**, pytest skip0·`pip check` 통과. current Python3.14.8 / HA2026.10.2 / plugin0.13.373 / pycares5.2.1, minimum Python3.13.16 / HA2025.8.0 / plugin0.13.269 / pycares4.11.0. 네 환경 모두 실제 blesession0.9.0. 로그 `/tmp/minibig-review-tests-ci.log`, `/tmp/minibig-review-validate-ci.log`. 원격 Validate는 HACS brands·Hassfest·중앙 템플릿 검사 성공이며 이번 변경 후 원격 실행을 뜻하지 않습니다.
+- HACS-03/DOC-03: [hacs/default 고정 목록](https://github.com/hacs/default/blob/a75c02e2cb94db482c5aaddcc83d0dad00cc20a0/integration)의 `eigger/hass-minibig` 등재를 2026-10-20 확인. `.hass-standards.json`의 `hacs: default`·근거/확인일과 중앙 렌더러의 양언어 Default 배지 반영. README/사용 안내의 사용자 지정 저장소 등록 필수 절차를 기본 목록 MiniBig 검색·다운로드로 정정했습니다. 한국어 사용 안내의 README 링크도 한국어판으로 맞추고 나머지 본문을 보존했습니다.
+- 중앙 원본 자체 검사: root와 review가 공개 SHA의 clone에서 `python3 scripts/check_repository.py` 실행, **Checked 37 documents, 7 workflows, JSON and caller input contracts**, 종료0. 2026-10-19의 중앙 자체 검사 실패는 당시 환경의 역사적 기록으로 분리합니다.
+- 최종 HACS 문서 diff 독립 리뷰 통과, 필수 미해결 지적 없음. review 담당의 `check_integration.py . --check`와 `sync_badges.py . --check` 각각 종료0, root도 중앙 통합 검사·diff 검사 재실행 종료0. 이번 문서 작업 트리 commit/push·그 새 SHA의 원격 CI는 미실행이며 중앙 현황 원격 반영도 남아 있습니다. 승인 예외 없음.
+
+## 2026-10-19 후속 재검토 (역사적 기록)
+
+이 절은 2026-10-19 당시 판정입니다. 아래 2026-10-17 기록과 함께 당시 게시 커밋·작업 트리의 이력으로 보존하며, 현재 판정은 맨 위 2026-10-20 절에서 확인합니다.
 
 | 항목 | 현재 확인 내용 |
 |---|---|
