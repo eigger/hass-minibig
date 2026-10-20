@@ -33,10 +33,8 @@ Detailed information preserved from the original README. CLWM-B06 hardware obser
 ### Via HACS (Recommended)
 
 1. Open **HACS** in Home Assistant.
-2. Click the top-right menu (three dots) -> **Custom repositories**.
-3. Add repository URL: `https://github.com/eigger/hass-minibig` with Category: **Integration**.
-4. Search for **MiniBig** in HACS and click **Download**.
-5. Restart Home Assistant.
+2. Search for **MiniBig** in the default integration catalog and click **Download**.
+3. Restart Home Assistant.
 
 ### Requirements
 

@@ -7,7 +7,7 @@ MiniBig 창문 오프너와 PushMini/SwitchMini를 클라우드 계정·HubMini 
 
 <!-- hass-standards:badges:start -->
 [![Release](https://img.shields.io/github/v/release/eigger/hass-minibig?style=flat)](https://github.com/eigger/hass-minibig/releases)
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5?style=flat)](#설치)
+[![HACS Default](https://img.shields.io/badge/HACS-Default-41BDF5?style=flat)](#설치)
 [![Home Assistant minimum](https://img.shields.io/badge/HA-%E2%89%A5%202025.8.0-41BDF5?style=flat)](hacs.json)
 [![Tests](https://img.shields.io/github/actions/workflow/status/eigger/hass-minibig/tests.yml?branch=main&style=flat&label=Tests)](https://github.com/eigger/hass-minibig/actions/workflows/tests.yml)
 [![Validate](https://img.shields.io/github/actions/workflow/status/eigger/hass-minibig/validate.yml?branch=main&style=flat&label=Validate)](https://github.com/eigger/hass-minibig/actions/workflows/validate.yml)
@@ -32,7 +32,7 @@ Home Assistant **2025.8.0 이상**, 기기 범위 안의 연결 가능한 Blueto
 
 ## 설치
 
-1. HACS 사용자 지정 저장소에 `https://github.com/eigger/hass-minibig`를 **Integration** 유형으로 추가합니다.
+1. HACS를 열고 기본 통합 목록에서 **MiniBig**을 검색합니다.
 2. **MiniBig**을 다운로드하고 HA를 재시작합니다. 수동 설치는 `custom_components/minibig`를 `<config_dir>/custom_components/`로 복사하고 재시작합니다.
 3. 가까이에서 기기 전원을 켜고 Bluetooth 발견 알림을 구성하거나 **설정 → 기기 및 서비스**에서 **MiniBig**을 추가합니다.
 4. 생성된 cover/switch를 사용합니다. 예를 들어 **개발자 도구 → 작업**에서 창문 엔티티에 `cover.stop_cover`를 호출하면 이동을 멈춥니다.

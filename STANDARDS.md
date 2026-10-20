@@ -2,15 +2,27 @@
 
 - 표준: https://github.com/eigger/hass-repo-standards/tree/0bfb572cbe49b92b3dbc559382c00bd0eb2cbd44
 - 참조 커밋 SHA: `0bfb572cbe49b92b3dbc559382c00bd0eb2cbd44`
-- 재검토일: 2026-10-19 (Asia/Seoul)
+- 재검토일: 2026-10-20 (Asia/Seoul)
 - profile: integration / ha
-- 대상: `eigger/hass-minibig`, 실제 기본 브랜치 `main`, 시작 커밋 `04a425c1b2071ceb705b06fdf1d956daedcdaaf4`의 후속 작업 트리
+- 대상: `eigger/hass-minibig`, 실제 기본 브랜치 `main`, 검토 커밋 `3c7235280a57871c119def4056bcdffe78d4fa4a`와 이번 문서 변경 작업 트리
 - 조율 / 구현 / 독립 리뷰: root / implementation / review
 - 점검표: [ADOPTION_CHECKLIST.md](ADOPTION_CHECKLIST.md)
 - 중앙 현황: https://github.com/eigger/hass-repo-standards/blob/main/docs/adoption-status.md
 - 지원 최소: HA `2025.8.0`, 통합 `0.3.0`, `blesession>=0.9.0` 유지
 
-## 2026-10-19 재검토 범위와 영향
+## 2026-10-20 재검토 범위와 현재 상태
+
+이번 절이 현재 판정이며, 아래 2026-10-19 및 2026-10-17 절은 당시 검증·게시 대기 상태를 보존한 역사적 기록입니다. 2026-10-20 `git ls-remote https://github.com/eigger/hass-repo-standards.git refs/heads/main`으로 공개 중앙 main을 다시 확인한 결과 기존 참조 SHA와 동일합니다. 공개 SHA의 별도 checkout에서 AGENTS·README·채택 절차·체크리스트·관련 규칙·템플릿을 읽고 중앙 검사기를 실행했습니다.
+
+기존 기준 적용은 [PR #24](https://github.com/eigger/hass-minibig/pull/24)로 main `3c7235280a57871c119def4056bcdffe78d4fa4a`에 반영되었습니다. 이 정확한 main SHA의 [Tests](https://github.com/eigger/hass-minibig/actions/runs/39410376782)와 [Validate](https://github.com/eigger/hass-minibig/actions/runs/39410376805)는 성공했습니다. 이번 재검토에서는 해당 반영 사실과 검증 근거를 현재화하고 HACS 기본 목록 등재를 문서·설정에 반영합니다. 이전 절의 “채택 PR·원격 CI 대기”는 당시 상태이며 현재 대기 항목이 아닙니다.
+
+HACS 기본 목록의 [고정 커밋](https://github.com/hacs/default/blob/a75c02e2cb94db482c5aaddcc83d0dad00cc20a0/integration)에 `eigger/hass-minibig`가 포함됨을 2026-10-20 확인했습니다. `.hass-standards.json`을 `hacs: default`와 근거 URL·확인일로 갱신하고, 중앙 렌더러로 양언어 README의 Default 배지를 생성했습니다. README와 양언어 사용 안내의 설치 절차는 기본 목록에서 MiniBig 검색·다운로드로 정정했으며 그 밖의 본문을 보존했습니다.
+
+중앙 통합 검사·Ruff·format·diff 검사는 이번 작업 트리에서 실행했습니다. 지원 최소 HA2025.8.0·통합0.3.0·blesession>=0.9.0, current HA2026.10.2/plugin0.13.373/Python3.14와 minimum HA2025.8.0/plugin0.13.269/Python3.13을 유지합니다. 정확한 검증 결과와 독립 리뷰는 체크리스트의 2026-10-20 절에 기록했습니다. 최종 HACS 문서 diff 독립 리뷰·중앙 통합/배지 검사 통과, 필수 미해결 지적 없이 로컬 적용을 완료했습니다. 실물 BLE 기기·새 proxy 보드·HA frontend UI는 이번 재검토에서 검증하지 않았으며 imagespec 미사용으로 DOC-08은 해당 없습니다.
+
+중앙 현황은 조율자가 기존 checkout의 자기 리포 행에 이번 재검토를 로컬 반영했습니다. 해당 checkout에 기존 미게시 커밋이 있어 중앙 원격에 게시하지 않았습니다. 이번 문서 변경도 commit/push하지 않았으므로, 문서 작업 트리의 게시·새 SHA 원격 CI와 중앙 원격 현황 반영은 완료 근거와 구분합니다. 승인 예외는 없습니다.
+
+## 2026-10-19 재검토 범위와 영향 (역사적 기록)
 
 이전 기준 `b1c80cf2c4bf8b4bc4e3556409ad948b7f850ea0` 이후의 중앙 README 관리 영역·flat 배지·테스트 기반·공용 CI·DOC-07 기기별 문서 계약을 적용합니다. 중앙 템플릿과 렌더러를 사용하며 기존 영한 README 본문·설치 절차·사용 예제와 회귀 테스트를 보존합니다. 최신 원격 main은 `git ls-remote`로 확인했습니다. 중앙 로컬 checkout에만 있는 미게시 HACS 설치 안내 확장은 이번 기준에 포함하지 않습니다.
 
