@@ -1,8 +1,39 @@
 # 공통 규칙 적용 체크리스트
 
-## 2026-10-20 후속 재검토
+## 2026-10-20 최신 기준 재적용 (현재 판정)
 
-이 절이 현재 판정입니다. 아래 2026-10-19·2026-10-17 기록은 당시의 검증·게시 상태를 보존합니다. 이전 절의 PR·원격 CI 대기 항목은 [PR #24](https://github.com/eigger/hass-minibig/pull/24)의 main 반영과 아래 정확한 SHA의 성공으로 해소되었습니다.
+- 기준: 공개 중앙 main `648dad941a118c80325f44c7a13cb5b5b9c1c788`, 이전 `0bfb572cbe49b92b3dbc559382c00bd0eb2cbd44`. 대상 시작 main `790318e8998f170065b9dbfa909d58797f1b4950`와 현재 작업 트리. 담당 root / implementation / 독립 review.
+- 범위: 중앙 렌더러의 양언어 My HACS 설치 배지·Default HACS Downloads, 실제 제품 categories/categories_review, 전체 중앙 SHA pin과 categories 지원 공식 Hassfest source 입력. 기존 README 설치 제목·본문·예제·테스트 및 지원 정책 보존.
+- 지원: 통합0.3.0·HA2025.8.0·blesession>=0.9.0 유지. current Python3.14/HA2026.10.2/plugin0.13.373, minimum Python3.13/HA2025.8.0/plugin0.13.269 유지.
+
+| 규칙 | 상태 | 이번 근거 / 남은 작업 |
+|---|---|---|
+| GOV-01~03, CI-05 | PASS | 최신 중앙 원격 SHA 실제 확인·변경 영향 기록, 모든 공통 호출과 standards-ref 동일 SHA |
+| DOC-01~06, HACS-03 | PASS | Default 목록 근거 유지. 중앙 렌더러로 기존 설치 절에 My HACS 배지와 owner=eigger/repository=hass-minibig 링크 생성, HACS Downloads로 교체. 사용자 다운로드·재시작과 수치 의미 양언어 일치 |
+| HA-02 | PASS | `blinds_curtains` 주/`plugs_switches` 보조. 실제 창문 이동 및 PushMini/SwitchMini 스위치 제품 용도, devices.py 프로필·usage 제품표/DP가 근거. categories_review의 순서·미선언 integration_type=null·출처/담당/날짜·공식 taxonomy 기록 |
+| TEST-04, DEP | PASS | 코드·테스트·runtime requirements·지원 하한 변경 없음. 최소/current HA 실제 실행은 아래 이번 검증에 별도 기록 |
+| HACS-05, CI | TODO | published stable Hassfest의 categories 미지원에 새 선택 입력으로 검토한 공식 Core `ec18d8b25d1ee39aa8b85a72a170e42bee33228c` 전체 validator build/run 설정. 로컬 공식 Dockerfile build·원본 caller 전체 Hassfest 실행 종료0(세부 아래). 새 원격 HACS·Hassfest·Tests 미실행; 과거 SHA CI를 현재 PASS로 쓰지 않음 |
+| GOV-04 | TODO | 조율자가 중앙 자기 행만 최신 기준/진행 상태로 로컬 갱신. 대상 commit/push와 중앙 원격 보고 미수행 |
+| GOV-05 | PASS | 구현/독립 review 분리. 카테고리 제품 근거·양언어 본문 보존·공용 CI 최종 diff 독립 리뷰 및 양 HA 회귀·pip check, 공식 전체 Hassfest 독립 재실행 통과. 미해결 필수 지적 없음 |
+| DOC-08 | N/A | imagespec requirement/import 및 payload 렌더링 없음 |
+
+### 이번 검증
+
+- 중앙 도구는 대상 문법을 지원하는 구현 Python3.14 환경에서 실행했습니다. 기본 Python3.14의 PyYAML 누락으로 첫 진입은 실패했으며, 기존 실제 HA 환경의 PyYAML을 사용해 재실행했습니다. `/tmp/minibig-impl-current/bin/python <central>/scripts/check_integration.py --help`로 CLI 확인, `--write-readmes` 및 `. --check`, `sync_badges.py . --check` 종료0.
+- 공개 중앙 SHA의 `python scripts/check_repository.py`: 종료0, Checked 37 documents, 7 workflows, JSON and caller input contracts. 중앙 현황의 조율자 로컬 변경은 검사기 소스 변경과 구분합니다.
+- Ruff check/format(56files), actionlint1.7.12(`-shellcheck= -pyflakes=`), `git diff --check` 통과. shellcheck/pyflakes 별도 연동은 미실행입니다.
+- 구현 검증: 기존 격리 `/tmp/minibig-impl-current`·`/tmp/minibig-impl-min`에서 `python -m pytest tests/components/minibig/ -q` 및 `python -m pip check` 재실행. current Python3.14.5 / HA2026.10.2 / plugin0.13.373 / blesession0.9.0 / pycares5.2.0, **107passed 26.91s**. minimum Python3.13.14 / HA2025.8.0 / plugin0.13.269 / blesession0.9.0 / pycares4.11.0, **107passed 25.93s**, macOS asyncinotify 플랫폼 경고1. 양쪽 pytest skip0·pip check 통과. 로그 `/tmp/minibig-648dad9-impl-current.log`, `/tmp/minibig-648dad9-impl-min.log`.
+- 독립 review 검증: 별도 `/tmp/minibig-review-current`·`/tmp/minibig-review-min`에서 같은 Python/HA/plugin/BLE/pycares 실제 조합, current **107passed 27.02s**, minimum **107passed 25.99s**(같은 플랫폼 경고1), 양 pytest skip0·pip check 통과. 로그 `/tmp/minibig-review-latest-current-648dad9.log`, `/tmp/minibig-review-latest-minimum-648dad9.log`.
+- 이번에는 manifest 제품 분류 추가에 영향 있는 최소/current 실제 로딩을 각각 재검증했습니다. 라이브러리 requirement·installer 변경은 없어 네 library matrix를 로컬 새로 재설치하지 않았으며 기존/향후 원격 네 matrix 결과와 구분합니다.
+- 실제 전체 Hassfest: root가 clean Core `ec18d8b25d1ee39aa8b85a72a170e42bee33228c`의 공식 Dockerfile을 수정 없이 `docker build --file /tmp/hassfest-core-niimbot-hassfest-prototype-1/script/hassfest/docker/Dockerfile --tag minibig-hassfest:ec18d8 /tmp/hassfest-core-niimbot-hassfest-prototype-1`로 build, 종료0. 이어 `docker run --rm --volume /Volumes/HDD/GitHub/hass-minibig:/github/workspace minibig-hassfest:ec18d8`로 원본 caller의 전체 validator 실행, 종료0·**Integrations1 / Invalid integrations0**. 부분 검사·manifest 전처리·필터 없음. 로그 `/tmp/minibig-hassfest-build-648dad9.log`, `/tmp/minibig-hassfest-validate-648dad9.log`. review 담당도 source HEAD/clean·공식 entrypoint·원본 mount를 독립 확인하고 같은 전체 Docker validator 재실행 종료0, Integrations1 / Invalid0을 확인했습니다. 독립 로그 `/tmp/minibig-review-hassfest-validate-648dad9.log`. 이는 로컬 ARM64 성공이며 원격 amd64 CI 성공으로 간주하지 않습니다.
+
+검사 편의를 위한 패키지 재설치·하한 상향 없음. 새 원격 HACS/CI·실물 BLE·새 proxy 보드·HA frontend UI·배지 실시간 수치는 미검증입니다. 데이터 누락은 0으로 바꾸지 않습니다.
+
+아래 기록은 이전 기준·게시 커밋별 역사적 근거이며 이번 트리의 검증 결과와 구분합니다.
+
+## 2026-10-20 HACS Default 재검토 (역사적 기록)
+
+이 절은 HACS Default 반영 당시 판정입니다. 아래 2026-10-19·2026-10-17 기록과 함께 당시의 검증·게시 상태를 보존합니다. 이전 절의 PR·원격 CI 대기 항목은 [PR #24](https://github.com/eigger/hass-minibig/pull/24)의 main 반영과 아래 정확한 SHA의 성공으로 해소되었습니다.
 
 | 항목 | 현재 확인 내용 |
 |---|---|

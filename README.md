@@ -12,7 +12,7 @@ A HACS custom integration for local Bluetooth GATT control of MiniBig window ope
 [![Tests](https://img.shields.io/github/actions/workflow/status/eigger/hass-minibig/tests.yml?branch=main&style=flat&label=Tests)](https://github.com/eigger/hass-minibig/actions/workflows/tests.yml)
 [![Validate](https://img.shields.io/github/actions/workflow/status/eigger/hass-minibig/validate.yml?branch=main&style=flat&label=Validate)](https://github.com/eigger/hass-minibig/actions/workflows/validate.yml)
 [![License](https://img.shields.io/github/license/eigger/hass-minibig?style=flat)](LICENSE)
-[![Analytics reporting installs](https://img.shields.io/badge/dynamic/json?style=flat&color=41BDF5&label=Usage&query=%24.minibig.total&url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json)](https://analytics.home-assistant.io/)
+[![HACS Downloads](https://img.shields.io/badge/dynamic/json?style=flat&color=41BDF5&label=HACS+Downloads&query=%24%5B%3F%28%40.full_name%3D%3D%22eigger%2Fhass-minibig%22%29%5D.downloads&url=https%3A%2F%2Fdata-v2.hacs.xyz%2Fintegration%2Fdata.json)](https://www.hacs.xyz/)
 <!-- hass-standards:badges:end -->
 <!-- hass-standards:header:end -->
 
@@ -32,6 +32,12 @@ For proxy configuration and recommended hardware, use the [Bluetooth proxy setup
 
 ## Installation
 
+<!-- hass-standards:installation:start -->
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=eigger&repository=hass-minibig)
+<!-- hass-standards:installation:end -->
+
+HACS must already be installed. The badge opens the MiniBig repository page; continue with the download and restart steps below.
+
 1. Open HACS and search for **MiniBig** in the default integration catalog.
 2. Download **MiniBig**, then restart Home Assistant. Alternatively copy `custom_components/minibig` into `<config_dir>/custom_components/` and restart.
 3. Power on the device nearby and configure the Bluetooth discovery notification, or add **MiniBig** under **Settings → Devices & services**.
@@ -41,7 +47,7 @@ For proxy configuration and recommended hardware, use the [Bluetooth proxy setup
 
 Keep the opening clear and supervise physical window/motor commands. Raw commands, factory reset and unknown DP overrides can change calibration or move hardware; use them only with a confirmed model-specific mapping. **Keep Connected** is off by default; enabling it occupies the device's BLE connection and may block the phone app and increase battery use. Battery reports are profile-dependent.
 
-Historical CLWM-B06 hardware observations are preserved in the detailed guide. This standards adoption does **not** constitute new physical-device, proxy-board or HA frontend testing. Usage counts are opted-in HA Analytics installations; unavailable data does not mean zero installs.
+Historical CLWM-B06 hardware observations are preserved in the detailed guide. This standards adoption does **not** constitute new physical-device, proxy-board or HA frontend testing. HACS Downloads counts downloads of the release asset selected by HACS, rather than active installations; missing data does not mean zero downloads.
 
 ## Documentation
 

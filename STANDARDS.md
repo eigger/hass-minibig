@@ -1,18 +1,30 @@
 # 적용한 공통 규칙
 
-- 표준: https://github.com/eigger/hass-repo-standards/tree/0bfb572cbe49b92b3dbc559382c00bd0eb2cbd44
-- 참조 커밋 SHA: `0bfb572cbe49b92b3dbc559382c00bd0eb2cbd44`
+- 표준: https://github.com/eigger/hass-repo-standards/tree/648dad941a118c80325f44c7a13cb5b5b9c1c788
+- 참조 커밋 SHA: `648dad941a118c80325f44c7a13cb5b5b9c1c788`
 - 재검토일: 2026-10-20 (Asia/Seoul)
 - profile: integration / ha
-- 대상: `eigger/hass-minibig`, 실제 기본 브랜치 `main`, 검토 커밋 `3c7235280a57871c119def4056bcdffe78d4fa4a`와 이번 문서 변경 작업 트리
+- 대상: `eigger/hass-minibig`, 실제 기본 브랜치 `main`, 시작 커밋 `790318e8998f170065b9dbfa909d58797f1b4950`와 이번 최신 기준 적용 작업 트리
 - 조율 / 구현 / 독립 리뷰: root / implementation / review
 - 점검표: [ADOPTION_CHECKLIST.md](ADOPTION_CHECKLIST.md)
 - 중앙 현황: https://github.com/eigger/hass-repo-standards/blob/main/docs/adoption-status.md
 - 지원 최소: HA `2025.8.0`, 통합 `0.3.0`, `blesession>=0.9.0` 유지
 
-## 2026-10-20 재검토 범위와 현재 상태
+## 2026-10-20 최신 기준 재적용 (현재 판정)
 
-이번 절이 현재 판정이며, 아래 2026-10-19 및 2026-10-17 절은 당시 검증·게시 대기 상태를 보존한 역사적 기록입니다. 2026-10-20 `git ls-remote https://github.com/eigger/hass-repo-standards.git refs/heads/main`으로 공개 중앙 main을 다시 확인한 결과 기존 참조 SHA와 동일합니다. 공개 SHA의 별도 checkout에서 AGENTS·README·채택 절차·체크리스트·관련 규칙·템플릿을 읽고 중앙 검사기를 실행했습니다.
+공개 중앙 main `648dad941a118c80325f44c7a13cb5b5b9c1c788`을 `git ls-remote`로 확인하고 이전 기준 `0bfb572cbe49b92b3dbc559382c00bd0eb2cbd44` 이후 규칙·템플릿·도구 변경을 검토했습니다. 아래 절은 이전 채택의 역사적 근거이며 현재 작업 트리의 성공으로 재사용하지 않습니다.
+
+양언어 README의 기존 설치 절에 중앙 렌더러로 My Home Assistant HACS 설치 배지를 추가하고, Default의 집계 배지를 HACS 공식 데이터의 HACS Downloads로 전환했습니다. HACS 선행 설치·사용자 다운로드/재시작, 선택 릴리스 asset 다운로드와 활성 설치 수의 차이·데이터 누락 의미를 양언어로 기록했으며 기존 본문·안전 안내·예제는 보존했습니다.
+
+HA-02 제품 분류는 `blinds_curtains`를 주 분류, `plugs_switches`를 보조 분류로 선택했습니다. 실제 Window Opener의 창문 이동 위치·정지 용도와 PushMini/SwitchMini 스위치 제품이 근거이며 `minibig_ble/devices.py`의 프로필 및 `docs/usage.md`의 기기표·검증 DP 설명에 대응합니다. SwitchMini의 확인되지 않은 전원 DP 제한과 HubMini 미지원은 유지합니다. 엔티티 플랫폼에서 추정하지 않았으며 taxonomy 원본·선택 이유·검토자/날짜를 `.hass-standards.json.categories_review`에 기록했습니다. 이는 중앙 필수 정책이며 공식 HA 선택 필드·HACS 누락 경고와 구분합니다.
+
+모든 중앙 workflow/action 및 `standards-ref`를 새 SHA에 고정했습니다. categories를 거부하는 published stable Hassfest 이미지 대신, 중앙의 선택 입력 `hassfest-core-ref: ec18d8b25d1ee39aa8b85a72a170e42bee33228c`로 categories 지원 변경을 포함한 공식 Core의 Dockerfile·entrypoint·전체 validator를 수정 없이 빌드하도록 설정했습니다. 이 선택은 검증 도구이며 HA 지원 최소·테스트 runtime 변경이나 검사 제외가 아닙니다. 조율자가 같은 검토 Core SHA의 깨끗한 source에서 공식 Dockerfile을 빌드한 뒤 원본 caller를 `/github/workspace`에 mount하여 전체 Hassfest를 실행했습니다. build와 validator 모두 종료0, Integrations1 / Invalid integrations0을 확인했습니다. 공개 중앙 문서의 과거 build 취소는 당시 기록이며 이번 실제 성공과 구분합니다. 추후 공식 이미지의 스키마 지원을 같은 대상에서 실제 검증한 뒤 입력 제거를 재검토합니다.
+
+통합0.3.0·HA2025.8.0·blesession>=0.9.0 및 current2026.10.2/플러그인0.13.373/Python3.14, minimum2025.8.0/플러그인0.13.269/Python3.13을 유지합니다. 최종 diff·카테고리 의미·본문 보존 독립 리뷰와 최소/current 실제 HA107개 회귀·pip check, 공식 전체 Hassfest 독립 재실행을 통과했습니다. 미해결 필수 지적은 없으며 정확한 실행 환경·남은 원격 검증은 체크리스트의 최신 절에 기록했습니다. 승인 예외 없음. commit/push·새 원격 CI·중앙 현황 원격 반영은 수행하지 않았으며 실물·HA UI·배지 실시간 수치는 미검증입니다.
+
+## 2026-10-20 HACS Default 재검토 (역사적 기록)
+
+이 절은 HACS Default 반영 당시 판정이며, 아래 2026-10-19 및 2026-10-17 절과 함께 당시 검증·게시 대기 상태를 보존한 역사적 기록입니다. 2026-10-20 `git ls-remote https://github.com/eigger/hass-repo-standards.git refs/heads/main`으로 공개 중앙 main을 다시 확인한 결과 기존 참조 SHA와 동일합니다. 공개 SHA의 별도 checkout에서 AGENTS·README·채택 절차·체크리스트·관련 규칙·템플릿을 읽고 중앙 검사기를 실행했습니다.
 
 기존 기준 적용은 [PR #24](https://github.com/eigger/hass-minibig/pull/24)로 main `3c7235280a57871c119def4056bcdffe78d4fa4a`에 반영되었습니다. 이 정확한 main SHA의 [Tests](https://github.com/eigger/hass-minibig/actions/runs/39410376782)와 [Validate](https://github.com/eigger/hass-minibig/actions/runs/39410376805)는 성공했습니다. 이번 재검토에서는 해당 반영 사실과 검증 근거를 현재화하고 HACS 기본 목록 등재를 문서·설정에 반영합니다. 이전 절의 “채택 PR·원격 CI 대기”는 당시 상태이며 현재 대기 항목이 아닙니다.
 
