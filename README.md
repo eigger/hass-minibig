@@ -1,18 +1,20 @@
+<!-- hass-standards:header:start -->
 # MiniBig BLE for Home Assistant
 
-<!-- hass-standards:badges:start -->
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5?style=flat-square)](#installation)
-[![Release](https://img.shields.io/github/v/release/eigger/hass-minibig?style=flat-square)](https://github.com/eigger/hass-minibig/releases)
-[![Home Assistant minimum](https://img.shields.io/badge/HA-%E2%89%A5%202025.8.0-41BDF5?style=flat-square)](hacs.json)
-[![Tests](https://img.shields.io/github/actions/workflow/status/eigger/hass-minibig/tests.yml?branch=main&style=flat-square&label=Tests)](https://github.com/eigger/hass-minibig/actions/workflows/tests.yml)
-[![Validate](https://img.shields.io/github/actions/workflow/status/eigger/hass-minibig/validate.yml?branch=main&style=flat-square&label=Validate)](https://github.com/eigger/hass-minibig/actions/workflows/validate.yml)
-[![License](https://img.shields.io/github/license/eigger/hass-minibig?style=flat-square)](LICENSE)
-[![Analytics reporting installs](https://img.shields.io/badge/dynamic/json?style=flat-square&color=41BDF5&label=Usage&query=%24.minibig.total&url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json)](https://analytics.home-assistant.io/)
-<!-- hass-standards:badges:end -->
+A HACS custom integration for local Bluetooth GATT control of MiniBig window openers and PushMini/SwitchMini devices, without a cloud account or HubMini.
 
 **English** | [한국어](README.ko.md)
 
-A HACS custom integration for local Bluetooth GATT control of MiniBig window openers and PushMini/SwitchMini devices, without a cloud account or HubMini.
+<!-- hass-standards:badges:start -->
+[![Release](https://img.shields.io/github/v/release/eigger/hass-minibig?style=flat)](https://github.com/eigger/hass-minibig/releases)
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5?style=flat)](#installation)
+[![Home Assistant minimum](https://img.shields.io/badge/HA-%E2%89%A5%202025.8.0-41BDF5?style=flat)](hacs.json)
+[![Tests](https://img.shields.io/github/actions/workflow/status/eigger/hass-minibig/tests.yml?branch=main&style=flat&label=Tests)](https://github.com/eigger/hass-minibig/actions/workflows/tests.yml)
+[![Validate](https://img.shields.io/github/actions/workflow/status/eigger/hass-minibig/validate.yml?branch=main&style=flat&label=Validate)](https://github.com/eigger/hass-minibig/actions/workflows/validate.yml)
+[![License](https://img.shields.io/github/license/eigger/hass-minibig?style=flat)](LICENSE)
+[![Analytics reporting installs](https://img.shields.io/badge/dynamic/json?style=flat&color=41BDF5&label=Usage&query=%24.minibig.total&url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json)](https://analytics.home-assistant.io/)
+<!-- hass-standards:badges:end -->
+<!-- hass-standards:header:end -->
 
 ## Devices and features
 
@@ -26,7 +28,7 @@ See [device profiles, options and protocol details](docs/usage.md). Legacy PushM
 
 Home Assistant **2025.8.0 or newer** and a connectable Bluetooth adapter/proxy in range. Home Assistant installs `blesession` automatically. Complete initial mounting, direction and travel-limit calibration with the vendor app, then disconnect the app before HA control.
 
-For proxy configuration and recommended hardware, use the [Bluetooth proxy setup](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.md). Discovery scans and active GATT connections are separate requirements.
+For proxy configuration and recommended hardware, use the [Bluetooth proxy setup](https://github.com/eigger/blesession/blob/main/docs/bluetooth.md). Discovery scans and active GATT connections are separate requirements.
 
 ## Installation
 
@@ -49,8 +51,20 @@ Historical CLWM-B06 hardware observations are preserved in the detailed guide. T
 - [Development, real HA tests and dependencies (Korean)](docs/development.md)
 - [Standards and verification record](STANDARDS.md)
 
-## Support and license
+Remove addresses, device IDs, raw event payloads and sensitive physical-state details before posting logs.
 
-Report bugs in [Issues](https://github.com/eigger/hass-minibig/issues); use [Discussions](https://github.com/eigger/hass-minibig/discussions) for questions and proposals. Remove addresses, device IDs, raw event payloads and sensitive physical-state details before posting logs.
+<!-- hass-standards:support:start -->
+## Support
+
+- [Issues](https://github.com/eigger/hass-minibig/issues): Report bugs or request features.
+- [Discussions](https://github.com/eigger/hass-minibig/discussions): Ask questions and share your experience.
+<!-- hass-standards:support:end -->
+
+<!-- hass-standards:related-projects:start -->
+<!-- hass-standards:related-projects:end -->
+
+<!-- hass-standards:license:start -->
+## License
 
 Released under the [MIT License](LICENSE).
+<!-- hass-standards:license:end -->

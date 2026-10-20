@@ -6,7 +6,7 @@
 
 ## 테스트 경계·지원 정책
 
-테스트는 Core와 같은 `tests/components/minibig/`에 배치하고 `tests/conftest.py`의 실제 HA·플러그인 fixture를 사용합니다. `hass`, `enable_custom_integrations`, 실제 HA 테스트 helper `MockConfigEntry`로 loader·entry·플랫폼·registry·상태을 검증하며 외부 Bluetooth 광고/GATT 통신 경계만 대체합니다. HA core stub·FakeHass·`--no-deps`로 대신하지 않습니다. 기존 parser·writer·연결·coordinator·보고·서비스 회귀 검사는 유지합니다.
+테스트는 Core와 같은 `tests/components/minibig/`에 배치하고 `tests/conftest.py`의 중앙 원본과 동일한 autouse fixture `auto_enable_custom_integrations`가 커스텀 통합을 활성화합니다. domain conftest의 `mock_config_entry`와 `mock_client`는 실제 entry와 외부 BLE transport fixture를 제공합니다. `hass`, `enable_custom_integrations`, 실제 HA 테스트 helper `MockConfigEntry`로 loader·entry·플랫폼·registry·상태을 검증하며 외부 Bluetooth 광고/GATT 통신 경계만 대체합니다. HA core stub·FakeHass·`--no-deps`로 대신하지 않습니다. 기존 parser·writer·연결·coordinator·보고·서비스 회귀 검사는 유지합니다.
 
 | 환경 | Python | HA | pytest-homeassistant-custom-component | requirements |
 |---|---|---|---|---|
@@ -45,13 +45,13 @@ python -m ruff format --check .
 python -c "from importlib.metadata import version; print({p: version(p) for p in ('homeassistant', 'pytest-homeassistant-custom-component', 'blesession')})"
 ```
 
-원격 [Tests](../.github/workflows/tests.yml)의 matrix/입력과 [Validate](../.github/workflows/validate.yml)의 HACS·Hassfest 결과를 대상 SHA별 확인합니다. CI 성공으로 실물 MiniBig·HA frontend UI·새 프록시 보드 검증을 주장하지 않습니다.
+원격 [Tests](../.github/workflows/tests.yml)의 matrix/입력, 기존 매주 월요일 검사를 보존한 [Scheduled tests](../.github/workflows/scheduled_tests.yml), [Validate](../.github/workflows/validate.yml)의 HACS·Hassfest 결과를 대상 SHA별 확인합니다. CI 성공으로 실물 MiniBig·HA frontend UI·새 프록시 보드 검증을 주장하지 않습니다.
 
 ## 의존성·문서 변경
 
-런타임 패키지는 manifest requirements, HA domain은 dependencies/after_dependencies, 테스트·린트 도구는 별도 requirements에 둡니다. [공통 의존성 추가 절차](https://github.com/eigger/hass-repo-standards/blob/b1c80cf2c4bf8b4bc4e3556409ad948b7f850ea0/docs/dependencies.md)에 따라 extras·marker·연산자·호환 플랫폼·라이선스와 최소/current HA 설치를 검토합니다. bot은 새 하한 tree를 검증한 후 PR로 제안하며 실패를 숨기지 않습니다. GITHUB_TOKEN으로 만든 PR은 후속 push/PR CI를 자동 실행한다고 가정하지 않으며 추가 required checks는 수동 dispatch 등 별도 운영으로 확인합니다.
+런타임 패키지는 manifest requirements, HA domain은 dependencies/after_dependencies, 테스트·린트 도구는 별도 requirements에 둡니다. [공통 의존성 추가 절차](https://github.com/eigger/hass-repo-standards/blob/0bfb572cbe49b92b3dbc559382c00bd0eb2cbd44/docs/dependencies.md)에 따라 extras·marker·연산자·호환 플랫폼·라이선스와 최소/current HA 설치를 검토합니다. bot은 새 하한 tree를 검증한 후 PR로 제안하며 실패를 숨기지 않습니다. GITHUB_TOKEN으로 만든 PR은 후속 push/PR CI를 자동 실행한다고 가정하지 않으며 추가 required checks는 수동 dispatch 등 별도 운영으로 확인합니다.
 
-README는 영어/한국어 빠른 시작을 유지하고 상세 사용·문제 해결은 docs에 보존합니다. 배지는 `.hass-standards.json`과 관리 주석으로 양쪽을 함께 갱신합니다. 중앙 checkout의 `python3 scripts/sync_badges.py /path/to/hass-minibig --check`로 확인합니다. Usage는 Analytics 조회 성공 여부와 무관하게 실제 domain `minibig`를 사용합니다. 로그·fixture 공개 전 주소/기기 ID/프록시 정보/raw payload/민감한 물리 상태을 제거하세요.
+README는 영어/한국어 빠른 시작을 유지하고 상세 사용·문제 해결은 docs에 보존합니다. 배지는 `.hass-standards.json`과 관리 주석으로 양쪽을 함께 갱신합니다. 중앙 checkout의 `python3 scripts/check_integration.py /path/to/hass-minibig --check`로 확인합니다. Usage는 Analytics 조회 성공 여부와 무관하게 실제 domain `minibig`를 사용합니다. 로그·fixture 공개 전 주소/기기 ID/프록시 정보/raw payload/민감한 물리 상태을 제거하세요.
 
 ## 기존 브랜드 자산
 

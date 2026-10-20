@@ -1,7 +1,35 @@
 # 적용한 공통 규칙
 
+- 표준: https://github.com/eigger/hass-repo-standards/tree/0bfb572cbe49b92b3dbc559382c00bd0eb2cbd44
+- 참조 커밋 SHA: `0bfb572cbe49b92b3dbc559382c00bd0eb2cbd44`
+- 재검토일: 2026-10-19 (Asia/Seoul)
+- profile: integration / ha
+- 대상: `eigger/hass-minibig`, 실제 기본 브랜치 `main`, 시작 커밋 `04a425c1b2071ceb705b06fdf1d956daedcdaaf4`의 후속 작업 트리
+- 조율 / 구현 / 독립 리뷰: root / implementation / review
+- 점검표: [ADOPTION_CHECKLIST.md](ADOPTION_CHECKLIST.md)
+- 중앙 현황: https://github.com/eigger/hass-repo-standards/blob/main/docs/adoption-status.md
+- 지원 최소: HA `2025.8.0`, 통합 `0.3.0`, `blesession>=0.9.0` 유지
+
+## 2026-10-19 재검토 범위와 영향
+
+이전 기준 `b1c80cf2c4bf8b4bc4e3556409ad948b7f850ea0` 이후의 중앙 README 관리 영역·flat 배지·테스트 기반·공용 CI·DOC-07 기기별 문서 계약을 적용합니다. 중앙 템플릿과 렌더러를 사용하며 기존 영한 README 본문·설치 절차·사용 예제와 회귀 테스트를 보존합니다. 최신 원격 main은 `git ls-remote`로 확인했습니다. 중앙 로컬 checkout에만 있는 미게시 HACS 설치 안내 확장은 이번 기준에 포함하지 않습니다.
+
+공용 workflow와 action, `standards-ref`는 위 전체 SHA로 고정합니다. Tests의 기존 주간 실행은 별도 Scheduled tests workflow로 보존합니다. 옵션 흐름 클래스 이름을 `MiniBigOptionsFlow`로 정리하여 중앙 검사기가 올바른 options 번역 영역을 확인하게 하며 설정 데이터·entry·unique ID·실제 옵션 동작은 유지합니다. `custom_components/__init__.py`와 공통 테스트 fixture, 플랫폼별 실제 HA 검증을 추가합니다.
+
+로컬 적용·검증 후 사용자 후속 요청에 따라 브랜치에 커밋·푸시하고 채택 PR을 게시합니다. 태그·릴리스·수동 원격 workflow 실행은 수행하지 않습니다. 현재 트리의 로컬 검증과 이전 게시 커밋의 원격 CI를 구분하며, 새 원격 CI·중앙 게시 완료를 추정하지 않습니다. 정확한 실행 환경과 독립 리뷰 결과는 체크리스트에 기록합니다.
+
+## 현재 예외와 검증 범위
+
+승인 예외 및 독립 리뷰의 미해결 지적 없음. 최소/current HA×라이브러리 네 격리 환경에서 각107passed·skip0·pip check 통과, 독립 현재/최소 HA 재실행도 통과했습니다. 중앙 통합 검사·Ruff·actionlint 통과. 공개 중앙 원본 자체의 check_repository는 README 템플릿 header 오류로 실패했으며 현재 통합 검사 성공과 구분해 체크리스트에 기록했습니다.
+
+중앙 현황은 로컬 자기 행만 적용·검증 결과로 갱신했으며 미게시입니다. 채택 PR의 새 SHA 원격 Tests/Validate와 중앙 게시 확인은 체크리스트의 TODO로 유지합니다. 실물 BLE 기기·새 proxy 보드·HA frontend UI는 이번 작업에서 검증하지 않습니다. imagespec requirement/import가 없어 DOC-08 payload 계약은 해당 없음입니다.
+
+## 이전 적용 기록 (2026-10-17, 역사적 근거)
+
+아래 기록은 이전 기준과 게시 커밋의 검증 이력이며 이번 작업 트리의 성공 근거로 재사용하지 않습니다.
+
 - 표준: https://github.com/eigger/hass-repo-standards/tree/b1c80cf2c4bf8b4bc4e3556409ad948b7f850ea0
-- 참조 커밋 SHA: `b1c80cf2c4bf8b4bc4e3556409ad948b7f850ea0` (착수 시 실제 원격 main 확인)
+- 이전 참조 커밋 SHA: `b1c80cf2c4bf8b4bc4e3556409ad948b7f850ea0` (당시 착수 시 실제 원격 main 확인)
 - 채택 작업일: 2026-10-17; 구현 main 반영·정확한 SHA 원격 검증·중앙 구현/검증 종료 보고 완료
 - profile: integration / ha
 - 실제 기본 브랜치: `main`; domain: `minibig`

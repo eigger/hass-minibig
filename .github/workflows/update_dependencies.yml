@@ -11,8 +11,9 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    uses: eigger/hass-repo-standards/.github/workflows/dependency-update.yml@b1c80cf2c4bf8b4bc4e3556409ad948b7f850ea0 # reviewed standards commit
+    uses: eigger/hass-repo-standards/.github/workflows/dependency-update.yml@0bfb572cbe49b92b3dbc559382c00bd0eb2cbd44 # reviewed standards commit
     with:
+      standards-ref: 0bfb572cbe49b92b3dbc559382c00bd0eb2cbd44
       domain: minibig
       packages: '["blesession"]'
       python-version: '3.14'

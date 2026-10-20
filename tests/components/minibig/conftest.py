@@ -1,5 +1,13 @@
 """Actual HA entries and a remote-only Bluetooth transport replacement."""
 
+# <!-- hass-standards:domain-fixtures:start -->
+# Use pytest_homeassistant_custom_component.common.MockConfigEntry for
+# mock_config_entry when the integration uses config entries.
+# Define mock_client only when an external communication client is present.
+# Mock external communication boundaries, never Home Assistant core modules.
+# Keep integration-specific fixtures below this managed block.
+# <!-- hass-standards:domain-fixtures:end -->
+
 from time import monotonic
 
 import pytest
@@ -80,3 +88,15 @@ async def loaded_entry(hass, entry, advertisement, transport):
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
     return entry
+
+
+@pytest.fixture
+def mock_config_entry(entry):
+    """Expose the actual integration entry under the standard fixture name."""
+    return entry
+
+
+@pytest.fixture
+def mock_client(transport):
+    """Expose the external Bluetooth boundary under the standard fixture name."""
+    return transport
