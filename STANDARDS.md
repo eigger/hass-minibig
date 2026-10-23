@@ -1,7 +1,7 @@
 # 적용한 공통 규칙
 
-- 표준: https://github.com/eigger/hass-repo-standards/tree/648dad941a118c80325f44c7a13cb5b5b9c1c788
-- 참조 커밋 SHA: `648dad941a118c80325f44c7a13cb5b5b9c1c788`
+- 표준: https://github.com/eigger/hass-repo-standards/tree/b54ac48102d6e326c6929071fdc02ba8fade794e
+- 참조 커밋 SHA: `b54ac48102d6e326c6929071fdc02ba8fade794e`
 - 재검토일: 2026-10-20 (Asia/Seoul)
 - profile: integration / ha
 - 대상: `eigger/hass-minibig`, 실제 기본 브랜치 `main`, 시작 커밋 `790318e8998f170065b9dbfa909d58797f1b4950`와 이번 최신 기준 적용 작업 트리
@@ -91,3 +91,9 @@ Core 대응 구현과 `tests/components/minibig/` 실제 HA 테스트, 공통CI�
 - 중앙 구현·검증 종료 보고: [b7b7d4cdf7df9b50bfd6405d3207873c1bb3f9e0](https://github.com/eigger/hass-repo-standards/commit/b7b7d4cdf7df9b50bfd6405d3207873c1bb3f9e0)
 
 위 CI는 구현 커밋의 실제 결과입니다. 이 2문서 마감 커밋은 아직 미래의 SHA이므로 해당 성공을 추정하지 않습니다. 게시 후 독립 검증 담당이 자동 CI를 확인하고 중앙 최신 현황표에 최종 문서 커밋·CI와 완료 상태를 반영합니다. 실물·새 proxy 보드·HA frontend UI 미검증은 유지합니다.
+
+## 2026-10-23 다운로드 배지 부분 갱신
+
+- 배지·DOC-03/05와 Validate 형식 검사기만 중앙 [`b54ac48102d6e326c6929071fdc02ba8fade794e`](https://github.com/eigger/hass-repo-standards/tree/b54ac48102d6e326c6929071fdc02ba8fade794e)를 채택합니다. 이전 기준 SHA `648dad941a118c80325f44c7a13cb5b5b9c1c788`의 채택 이력·예외는 보존합니다. 모든 중앙 workflow/action pin과 standards-ref는 GOV-02의 단일 기준 SHA 계약에 맞춰 갱신합니다. 중앙 diff에서 공용 workflow/action 실행 파일은 이전 기준과 동일함을 확인했습니다.
+- 대상 기본 브랜치 커밋: `b7053799d2a46fe06a2488d75476c208b2d3566c`. 주 에이전트 직접 구현·자체 리뷰(GOV-05의 배지/생성물 변경 범위), 검증은 [ADOPTION_CHECKLIST.md](ADOPTION_CHECKLIST.md#2026-10-23-downloads-배지-부분-검증)에 기록합니다.
+- Downloads는 모든 릴리스 첨부 asset 다운로드 합계입니다. 사용자 지시에 따라 ZIP 배포를 도입하지 않으며 현재 HACS 소스 파일 설치는 이 수치에 집계되지 않습니다. 통합 코드·의존성·지원 최소·기존 설치 안내는 변경하지 않습니다.

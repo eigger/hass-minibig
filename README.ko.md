@@ -12,7 +12,7 @@ MiniBig 창문 오프너와 PushMini/SwitchMini를 클라우드 계정·HubMini 
 [![Tests](https://img.shields.io/github/actions/workflow/status/eigger/hass-minibig/tests.yml?branch=main&style=flat&label=Tests)](https://github.com/eigger/hass-minibig/actions/workflows/tests.yml)
 [![Validate](https://img.shields.io/github/actions/workflow/status/eigger/hass-minibig/validate.yml?branch=main&style=flat&label=Validate)](https://github.com/eigger/hass-minibig/actions/workflows/validate.yml)
 [![License](https://img.shields.io/github/license/eigger/hass-minibig?style=flat)](LICENSE)
-[![HACS Downloads](https://img.shields.io/badge/dynamic/json?style=flat&color=41BDF5&label=HACS+Downloads&query=%24%5B%3F%28%40.full_name%3D%3D%22eigger%2Fhass-minibig%22%29%5D.downloads&url=https%3A%2F%2Fdata-v2.hacs.xyz%2Fintegration%2Fdata.json)](https://www.hacs.xyz/)
+[![Downloads](https://img.shields.io/github/downloads/eigger/hass-minibig/total?style=flat&color=41BDF5&label=Downloads)](https://github.com/eigger/hass-minibig/releases)
 <!-- hass-standards:badges:end -->
 <!-- hass-standards:header:end -->
 
@@ -47,7 +47,7 @@ HACS가 먼저 설치되어 있어야 합니다. 배지는 MiniBig 저장소 화
 
 창문 이동 경로를 비우고 물리 모터 동작을 지켜보세요. raw 명령·공장 초기화·미확인 DP 재정의는 캘리브레이션을 변경하거나 기기를 움직일 수 있으므로 확인된 모델 매핑에만 사용합니다. **연결 유지** 기본값은 꺼짐입니다. 켜면 BLE 연결을 점유하여 공식 앱 연결을 막거나 배터리 사용량을 늘릴 수 있습니다. 배터리 보고 여부는 프로필에 따라 다릅니다.
 
-기존 CLWM-B06 실물 관측은 상세 문서에 보존했습니다. 이번 공통화는 새 실물·프록시 보드·HA UI 검증을 뜻하지 않습니다. HACS Downloads는 HACS가 선택한 릴리스 asset의 다운로드 수이며 활성 설치 수가 아닙니다. 데이터 누락·조회 실패는 다운로드 수 0을 뜻하지 않습니다.
+기존 CLWM-B06 실물 관측은 상세 문서에 보존했습니다. 이번 공통화는 새 실물·프록시 보드·HA UI 검증을 뜻하지 않습니다. Downloads 배지는 모든 GitHub 릴리스의 첨부 asset 다운로드 합계이며 활성 설치 수가 아닙니다. HACS 소스 파일 설치는 집계되지 않으며 ZIP 릴리스 배포는 사용하지 않습니다.
 
 ## 문서
 

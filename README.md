@@ -12,7 +12,7 @@ A HACS custom integration for local Bluetooth GATT control of MiniBig window ope
 [![Tests](https://img.shields.io/github/actions/workflow/status/eigger/hass-minibig/tests.yml?branch=main&style=flat&label=Tests)](https://github.com/eigger/hass-minibig/actions/workflows/tests.yml)
 [![Validate](https://img.shields.io/github/actions/workflow/status/eigger/hass-minibig/validate.yml?branch=main&style=flat&label=Validate)](https://github.com/eigger/hass-minibig/actions/workflows/validate.yml)
 [![License](https://img.shields.io/github/license/eigger/hass-minibig?style=flat)](LICENSE)
-[![HACS Downloads](https://img.shields.io/badge/dynamic/json?style=flat&color=41BDF5&label=HACS+Downloads&query=%24%5B%3F%28%40.full_name%3D%3D%22eigger%2Fhass-minibig%22%29%5D.downloads&url=https%3A%2F%2Fdata-v2.hacs.xyz%2Fintegration%2Fdata.json)](https://www.hacs.xyz/)
+[![Downloads](https://img.shields.io/github/downloads/eigger/hass-minibig/total?style=flat&color=41BDF5&label=Downloads)](https://github.com/eigger/hass-minibig/releases)
 <!-- hass-standards:badges:end -->
 <!-- hass-standards:header:end -->
 
@@ -47,7 +47,7 @@ HACS must already be installed. The badge opens the MiniBig repository page; con
 
 Keep the opening clear and supervise physical window/motor commands. Raw commands, factory reset and unknown DP overrides can change calibration or move hardware; use them only with a confirmed model-specific mapping. **Keep Connected** is off by default; enabling it occupies the device's BLE connection and may block the phone app and increase battery use. Battery reports are profile-dependent.
 
-Historical CLWM-B06 hardware observations are preserved in the detailed guide. This standards adoption does **not** constitute new physical-device, proxy-board or HA frontend testing. HACS Downloads counts downloads of the release asset selected by HACS, rather than active installations; missing data does not mean zero downloads.
+Historical CLWM-B06 hardware observations are preserved in the detailed guide. This standards adoption does **not** constitute new physical-device, proxy-board or HA frontend testing. The Downloads badge counts GitHub release asset downloads across all releases, not active installations. HACS source-file installations are not counted; ZIP release distribution is not used.
 
 ## Documentation
 
