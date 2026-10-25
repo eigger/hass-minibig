@@ -37,5 +37,10 @@
     ],
     "integration_type": null,
     "source": "Reviewed 2026-10-20 by implementation; independent review tracked in ADOPTION_CHECKLIST.md. Primary blinds_curtains: MiniBig Window Opener controls window travel position and stop (custom_components/minibig/minibig_ble/devices.py PROFILE_WINDOW_OPENER/get_device_profile; docs/usage.md Supported Devices and Verified DP Mapping). Secondary plugs_switches: PushMini switch actuator and SwitchMini switch products (PROFILE_PUSH_MINI_NEW/LEGACY, PROFILE_SWITCH_MINI and docs/usage.md, retaining the documented unconfirmed SwitchMini power DP limitation). HubMini is explicitly unsupported. Product purpose, not entity platforms, determines these choices. Taxonomy: https://github.com/home-assistant/core/blob/ec18d8b25d1ee39aa8b85a72a170e42bee33228c/homeassistant/generated/integration_categories.json"
+  },
+  "standards": {
+    "kind": "release",
+    "tag": "v1.0.0",
+    "resolved_sha": "44349ee5621eea5d80e5c427f7a2435d2c2491bb"
   }
 }
