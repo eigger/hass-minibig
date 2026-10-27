@@ -1,9 +1,9 @@
 # 적용한 공통 규칙
 
-- 표준: https://github.com/eigger/hass-repo-standards/tree/v1.1.2
-- 참조 커밋 SHA: df9798509d9228247ec32efb313ec7b687b5b152
-- Standards release: v1.1.2
-- Resolved standards SHA: df9798509d9228247ec32efb313ec7b687b5b152
+- 표준: https://github.com/eigger/hass-repo-standards/tree/v1.1.3
+- 참조 커밋 SHA: c8c2771a2de68769af40f56e19e958e374e6e091
+- Standards release: v1.1.3
+- Resolved standards SHA: c8c2771a2de68769af40f56e19e958e374e6e091
 - 재검토일: 2026-10-20 (Asia/Seoul)
 - profile: integration / ha
 - 대상: `eigger/hass-minibig`, 실제 기본 브랜치 `main`, 시작 커밋 `790318e8998f170065b9dbfa909d58797f1b4950`와 이번 최신 기준 적용 작업 트리
