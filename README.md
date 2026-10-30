@@ -12,7 +12,7 @@ A HACS custom integration for local Bluetooth GATT control of MiniBig window ope
 [![Tests](https://img.shields.io/github/actions/workflow/status/eigger/hass-minibig/tests.yml?branch=main&style=flat&label=Tests)](https://github.com/eigger/hass-minibig/actions/workflows/tests.yml)
 [![Validate](https://img.shields.io/github/actions/workflow/status/eigger/hass-minibig/validate.yml?branch=main&style=flat&label=Validate)](https://github.com/eigger/hass-minibig/actions/workflows/validate.yml)
 [![License](https://img.shields.io/github/license/eigger/hass-minibig?style=flat)](LICENSE)
-[![Downloads](https://img.shields.io/github/downloads/eigger/hass-minibig/total?style=flat&color=41BDF5&label=Downloads)](https://github.com/eigger/hass-minibig/releases)
+[![Downloads](https://img.shields.io/github/downloads/eigger/hass-minibig/latest/total?style=flat&color=41BDF5&label=Downloads)](https://github.com/eigger/hass-minibig/releases)
 <!-- hass-standards:badges:end -->
 <!-- hass-standards:header:end -->
 
@@ -47,7 +47,7 @@ HACS must already be installed. The badge opens the MiniBig repository page; con
 
 Keep the opening clear and supervise physical window/motor commands. Raw commands, factory reset and unknown DP overrides can change calibration or move hardware; use them only with a confirmed model-specific mapping. **Keep Connected** is off by default; enabling it occupies the device's BLE connection and may block the phone app and increase battery use. Battery reports are profile-dependent.
 
-Historical CLWM-B06 hardware observations are preserved in the detailed guide. This standards adoption does **not** constitute new physical-device, proxy-board or HA frontend testing. The Downloads badge counts GitHub release asset downloads across all releases, not active installations.
+Historical CLWM-B06 hardware observations are preserved in the detailed guide. This standards adoption does **not** constitute new physical-device, proxy-board or HA frontend testing. The Downloads badge counts GitHub release asset downloads of the current release, not active installations.
 
 ## Documentation
 
