@@ -1,7 +1,7 @@
 <!-- hass-standards:header:start -->
 # MiniBig BLE for Home Assistant
 
-A HACS custom integration for local Bluetooth GATT control of MiniBig window openers and PushMini/SwitchMini devices, without a cloud account or HubMini.
+A Home Assistant custom integration that controls MiniBig window openers and PushMini/SwitchMini devices over local Bluetooth GATT, without a cloud account or HubMini.
 
 **English** | [한국어](README.ko.md)
 
@@ -26,9 +26,9 @@ See [device profiles, options and protocol details](docs/usage.md). Legacy PushM
 
 ## Requirements
 
-Home Assistant **2025.8.0 or newer** and a connectable Bluetooth adapter/proxy in range. Home Assistant installs `blesession` automatically. Complete initial mounting, direction and travel-limit calibration with the vendor app, then disconnect the app before HA control.
-
-For proxy configuration and recommended hardware, use the [Bluetooth proxy setup](https://github.com/eigger/blesession/blob/main/docs/bluetooth.md). Discovery scans and active GATT connections are separate requirements.
+- **Home Assistant:** 2025.8.0 or later.
+- **Bluetooth:** A connectable Bluetooth adapter or proxy in range. Discovery scanning and active GATT connections are separate.
+- **Device:** A supported MiniBig device. Home Assistant installs `blesession` automatically.
 
 ## Installation
 
@@ -36,18 +36,27 @@ For proxy configuration and recommended hardware, use the [Bluetooth proxy setup
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=eigger&repository=hass-minibig)
 <!-- hass-standards:installation:end -->
 
-HACS must already be installed. The badge opens the MiniBig repository page; continue with the download and restart steps below.
+1. Click the badge above to open the repository in Marketplace.
+2. If you need to add it yourself, go to **Settings → Marketplace → Add from link** and enter <https://github.com/eigger/hass-minibig>. Connect GitHub if prompted.
+3. Select **Install**. Restart Home Assistant if prompted, then continue to [Configuration](#configuration).
 
-1. Open HACS and search for **MiniBig** in the default integration catalog.
-2. Download **MiniBig**, then restart Home Assistant. Alternatively copy `custom_components/minibig` into `<config_dir>/custom_components/` and restart.
-3. Power on the device nearby and configure the Bluetooth discovery notification, or add **MiniBig** under **Settings → Devices & services**.
-4. Use the created cover/switch controls. For example, send `cover.stop_cover` to the window entity from **Developer Tools → Actions** to stop movement.
+## Configuration
 
-## Important limits
+Complete mounting, direction and travel-limit calibration in the vendor app, then disconnect the app. For remote Bluetooth, see [proxy setup and hardware](https://github.com/eigger/blesession/blob/main/docs/bluetooth.md).
+
+Power on the device nearby. Configure the Bluetooth discovery notification or add **MiniBig** under **Settings → Devices & services**.
+
+## Quick start
+
+Use the cover and switch controls. To stop movement, send `cover.stop_cover` to the window entity from **Developer tools → Actions**.
+
+<a name="important-limits"></a>
+
+## Important limitations
 
 Keep the opening clear and supervise physical window/motor commands. Raw commands, factory reset and unknown DP overrides can change calibration or move hardware; use them only with a confirmed model-specific mapping. **Keep Connected** is off by default; enabling it occupies the device's BLE connection and may block the phone app and increase battery use. Battery reports are profile-dependent.
 
-Historical CLWM-B06 hardware observations are preserved in the detailed guide. This standards adoption does **not** constitute new physical-device, proxy-board or HA frontend testing. The Downloads badge counts GitHub release asset downloads of the current release, not active installations.
+Historical CLWM-B06 hardware observations are preserved in the detailed guide. This standards adoption does **not** constitute new physical-device, proxy-board or HA frontend testing.
 
 ## Documentation
 
