@@ -1,7 +1,7 @@
 <!-- hass-standards:header:start -->
 # MiniBig BLE for Home Assistant
 
-MiniBig 창문 오프너와 PushMini/SwitchMini를 클라우드 계정·HubMini 없이 로컬 Bluetooth GATT로 제어하는 HACS 커스텀 통합입니다.
+MiniBig 창문 오프너와 PushMini/SwitchMini를 클라우드 계정이나 HubMini 없이 로컬 Bluetooth GATT로 제어하는 Home Assistant 커스텀 통합입니다.
 
 [English](README.md) | **한국어**
 
@@ -26,9 +26,9 @@ MiniBig 창문 오프너와 PushMini/SwitchMini를 클라우드 계정·HubMini 
 
 ## 요구사항
 
-Home Assistant **2025.8.0 이상**, 기기 범위 안의 연결 가능한 Bluetooth 어댑터/프록시가 필요합니다. `blesession`은 HA가 자동 설치합니다. 최초 설치 유형·방향·이동 한계 캘리브레이션은 공식 앱에서 마치고, HA 제어 전 앱 연결을 해제하세요.
-
-프록시 설정·추천 기기는 [Bluetooth 프록시 설정](https://github.com/eigger/blesession/blob/main/docs/bluetooth.ko.md)을 따릅니다. 광고 스캔과 active GATT 연결은 다른 조건입니다.
+- **Home Assistant:** 2025.8.0 이상.
+- **Bluetooth:** 기기 범위 안의 연결 가능한 Bluetooth 어댑터 또는 프록시. 광고 스캔과 활성 GATT 연결은 별도 조건입니다.
+- **기기:** 지원되는 MiniBig 기기. Home Assistant가 `blesession`을 자동 설치합니다.
 
 ## 설치
 
@@ -36,18 +36,27 @@ Home Assistant **2025.8.0 이상**, 기기 범위 안의 연결 가능한 Blueto
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=eigger&repository=hass-minibig)
 <!-- hass-standards:installation:end -->
 
-HACS가 먼저 설치되어 있어야 합니다. 배지는 MiniBig 저장소 화면을 열며, 아래 다운로드·재시작 절차를 이어서 진행하세요.
+1. 위 배지를 클릭해 마켓플레이스에서 저장소를 엽니다.
+2. 저장소를 직접 추가하려면 **설정 → 마켓플레이스 → 링크에서 추가**에서 <https://github.com/eigger/hass-minibig>을 입력합니다. 안내가 표시되면 GitHub 계정을 연결합니다.
+3. **설치**를 선택합니다. 재시작 안내가 표시되면 Home Assistant를 재시작합니다. 설치가 끝나면 [설정](#설정)으로 이동합니다.
 
-1. HACS를 열고 기본 통합 목록에서 **MiniBig**을 검색합니다.
-2. **MiniBig**을 다운로드하고 HA를 재시작합니다. 수동 설치는 `custom_components/minibig`를 `<config_dir>/custom_components/`로 복사하고 재시작합니다.
-3. 가까이에서 기기 전원을 켜고 Bluetooth 발견 알림을 구성하거나 **설정 → 기기 및 서비스**에서 **MiniBig**을 추가합니다.
-4. 생성된 cover/switch를 사용합니다. 예를 들어 **개발자 도구 → 작업**에서 창문 엔티티에 `cover.stop_cover`를 호출하면 이동을 멈춥니다.
+## 설정
 
-## 중요 제한
+공식 앱에서 최초 설치 유형·방향·이동 한계 캘리브레이션을 완료하고 앱 연결을 해제하세요. 원격 Bluetooth에는 [프록시 설정·추천 기기](https://github.com/eigger/blesession/blob/main/docs/bluetooth.ko.md)를 참고하세요.
+
+가까이에서 기기 전원을 켭니다. Bluetooth 발견 알림에서 설정하거나 **설정 → 기기 및 서비스**에서 **MiniBig**을 추가합니다.
+
+## 빠른 시작
+
+커버와 스위치 엔티티로 제어합니다. 이동을 멈추려면 **개발자 도구 → 액션**에서 창문 엔티티에 `cover.stop_cover`를 호출하세요.
+
+<a name="중요-제한"></a>
+
+## 중요 제한사항
 
 창문 이동 경로를 비우고 물리 모터 동작을 지켜보세요. raw 명령·공장 초기화·미확인 DP 재정의는 캘리브레이션을 변경하거나 기기를 움직일 수 있으므로 확인된 모델 매핑에만 사용합니다. **연결 유지** 기본값은 꺼짐입니다. 켜면 BLE 연결을 점유하여 공식 앱 연결을 막거나 배터리 사용량을 늘릴 수 있습니다. 배터리 보고 여부는 프로필에 따라 다릅니다.
 
-기존 CLWM-B06 실물 관측은 상세 문서에 보존했습니다. 이번 공통화는 새 실물·프록시 보드·HA UI 검증을 뜻하지 않습니다. Downloads 배지는 현재 GitHub 릴리스의 첨부 asset 다운로드 합계이며 활성 설치 수가 아닙니다.
+기존 CLWM-B06 실물 관측은 상세 문서에 보존했습니다. 이번 공통화는 새 실물·프록시 보드·HA UI 검증을 뜻하지 않습니다.
 
 ## 문서
 
